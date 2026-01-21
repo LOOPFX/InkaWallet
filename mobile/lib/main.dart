@@ -16,6 +16,9 @@ import 'screens/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/send_money_screen.dart';
+import 'screens/history_screen.dart';
+import 'screens/settings_screen.dart';
 import 'utils/app_theme.dart';
 import 'utils/constants.dart';
 
@@ -94,6 +97,9 @@ class MyApp extends StatelessWidget {
               '/login': (context) => const LoginScreen(),
               '/register': (context) => const RegisterScreen(),
               '/home': (context) => const HomeScreen(),
+              '/send-money': (context) => const SendMoneyScreen(),
+              '/history': (context) => const TransactionHistoryScreen(),
+              '/settings': (context) => const SettingsScreen(),
             },
             
             // Accessibility settings

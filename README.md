@@ -72,10 +72,12 @@ InkaWallet is an inclusive digital wallet application designed to serve both reg
 
 ### Admin Web
 
-- **Framework**: React + TypeScript
-- **UI Library**: Material-UI
-- **State Management**: Redux Toolkit
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **UI Library**: Material-UI (MUI)
+- **State Management**: React Context API
 - **Charts**: Recharts
+- **HTTP Client**: Axios
 
 ## Project Structure
 
@@ -86,35 +88,36 @@ InkaWallet/
 │   │   ├── main.dart
 │   │   ├── models/         # Data models
 │   │   ├── services/       # API, voice, storage services
-│   │   ├── screens/        # UI screens
-│   │   ├── widgets/        # Reusable widgets
+│   │   ├── screens/        # UI screens (auth, home, send, history, settings)
 │   │   ├── providers/      # State management
-│   │   └── utils/          # Helpers, constants
-│   ├── assets/             # Images, fonts, sounds
+│   │   └── utils/          # Helpers, constants, themes
 │   └── pubspec.yaml
 ├── backend/                # Node.js backend
 │   ├── src/
 │   │   ├── controllers/    # Request handlers
-│   │   ├── models/         # Database models
 │   │   ├── routes/         # API routes
-│   │   ├── middleware/     # Auth, validation
-│   │   ├── services/       # Business logic
-│   │   ├── utils/          # Encryption, helpers
+│   │   ├── middleware/     # Auth, validation, error handling
+│   │   ├── config/         # Database configuration
+│   │   ├── utils/          # Encryption, security, logging
 │   │   └── server.ts
-│   ├── database/           # Migrations, seeds
+│   ├── database/
+│   │   └── schema.sql      # Database schema with triggers
 │   └── package.json
-├── admin-web/              # Admin dashboard
+├── admin/                  # Admin web dashboard
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
+│   │   ├── components/     # Layout, reusable components
+│   │   ├── pages/          # Dashboard, Users, Transactions, Logs, Feedback
+│   │   ├── services/       # API service
+│   │   ├── contexts/       # Auth context
+│   │   ├── types/          # TypeScript interfaces
 │   │   └── App.tsx
-│   └── package.json
+│   ├── package.json
+│   └── vite.config.ts
 └── docs/                   # Documentation
-    ├── API.md
-    ├── SECURITY.md
-    ├── ACCESSIBILITY.md
-    └── SETUP.md
+    ├── API.md              # API reference
+    ├── SECURITY.md         # Security architecture
+    ├── ACCESSIBILITY.md    # Accessibility features
+    └── SETUP.md            # Installation guide
 ```
 
 ## Security Measures

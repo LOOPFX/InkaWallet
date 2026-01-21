@@ -106,7 +106,28 @@ emulator -avd Pixel_6_API_33
 flutter run -d emulator-5554
 ```
 
-## Step 4: Test the App
+## Step 4: Admin Dashboard Setup (Optional - 5 minutes)
+
+Open a **new terminal window**:
+
+```bash
+# 1. Navigate to admin
+cd admin
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the admin dashboard
+npm run dev
+```
+
+✅ Admin dashboard should be running at `http://localhost:3001`
+
+Access it:
+- Open browser to `http://localhost:3001`
+- Login with any registered user credentials
+
+## Step 5: Test the App
 
 ### Create a Test Account
 
