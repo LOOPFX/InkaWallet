@@ -124,6 +124,7 @@ npm run dev
 ✅ Admin dashboard should be running at `http://localhost:3001`
 
 Access it:
+
 - Open browser to `http://localhost:3001`
 - Login with any registered user credentials
 

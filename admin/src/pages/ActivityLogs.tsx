@@ -12,7 +12,6 @@ import {
   TablePagination,
   Button,
   TextField,
-  Grid,
 } from '@mui/material'
 import { Download } from '@mui/icons-material'
 import { apiService } from '../services/api'
@@ -21,7 +20,7 @@ import { format } from 'date-fns'
 
 export default function ActivityLogs() {
   const [logs, setLogs] = useState<ActivityLog[]>([])
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [total, setTotal] = useState(0)

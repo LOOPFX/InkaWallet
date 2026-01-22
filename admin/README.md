@@ -72,30 +72,35 @@ All requests require JWT authentication via the `Authorization: Bearer <token>` 
 ## Features in Detail
 
 ### Dashboard
+
 - Total users (active and inactive)
 - Transaction statistics (count, volume, status)
 - Real-time metrics
 - Research data collection info
 
 ### User Management
+
 - View all registered users
 - Paginated user list
 - Activate/deactivate users
 - Export user data to CSV
 
 ### Transactions
+
 - View all transactions
 - Filter by status (completed, pending, failed)
 - Filter by wallet provider
 - Export transaction data
 
 ### Activity Logs
+
 - Track user actions
 - Search logs by action or user
 - View IP addresses and timestamps
 - Export logs for analysis
 
 ### Feedback
+
 - View user ratings and comments
 - Calculate average satisfaction score
 - Export feedback data
@@ -169,16 +174,19 @@ VITE_API_URL=http://localhost:3000/api
 ## Troubleshooting
 
 ### Cannot connect to API
+
 - Ensure backend server is running on port 3000
 - Check CORS settings in backend
 - Verify API URL in vite.config.ts proxy
 
 ### Login fails
+
 - Verify user credentials are correct
 - Check backend API is accessible
 - Ensure JWT tokens are being generated properly
 
 ### Build errors
+
 - Delete node_modules and run `npm install` again
 - Clear build cache: `rm -rf dist`
 - Check TypeScript errors: `npm run lint`

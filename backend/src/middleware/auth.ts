@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your_refresh_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_change_in_production';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your_refresh_secret_change_in_production';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -19,18 +19,20 @@ export interface AuthRequest extends Request {
  * Generate JWT access token
  */
 export const generateAccessToken = (payload: any): string => {
+  const expiresIn = (process.env.JWT_EXPIRY || '1h') as string;
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY || '1h',
-  });
+    expiresIn,
+  } as jwt.SignOptions);
 };
 
 /**
  * Generate JWT refresh token
  */
 export const generateRefreshToken = (payload: any): string => {
+  const expiresIn = (process.env.JWT_REFRESH_EXPIRY || '7d') as string;
   return jwt.sign(payload, JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRY || '7d',
-  });
+    expiresIn,
+  } as jwt.SignOptions);
 };
 
 /**

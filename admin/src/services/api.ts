@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { User, Transaction, ActivityLog, FeedbackItem, DashboardStats } from '../types'
+import type { User, Transaction, DashboardStats } from '../types'
 
 const api = axios.create({
   baseURL: '/api',

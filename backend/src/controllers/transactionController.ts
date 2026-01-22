@@ -1,9 +1,7 @@
 import { Response } from 'express';
 import { validationResult } from 'express-validator';
-import { v4 as uuidv4 } from 'uuid';
 import { AuthRequest } from '../middleware/auth';
 import db from '../config/database';
-import { generateReferenceNumber } from '../utils/security';
 import logger from '../utils/logger';
 
 /**
@@ -48,8 +46,7 @@ export const sendMoney = async (req: AuthRequest, res: Response): Promise<void> 
     const wallet: any = wallets[0];
 
     // Use stored procedure for transaction
-    const transactionId = uuidv4();
-    const [result]: any = await db.query(
+    const [_result]: any = await db.query(
       'CALL transfer_money(?, ?, ?, ?, ?, ?, @transaction_id, @transaction_status, @error_message)',
       [
         wallet.id,

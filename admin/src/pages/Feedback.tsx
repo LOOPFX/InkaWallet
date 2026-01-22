@@ -16,14 +16,14 @@ import {
   Card,
   CardContent,
 } from '@mui/material'
-import { Download, Star } from '@mui/icons-material'
+import { Download } from '@mui/icons-material'
 import { apiService } from '../services/api'
 import type { FeedbackItem } from '../types'
 import { format } from 'date-fns'
 
 export default function Feedback() {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [total, setTotal] = useState(0)

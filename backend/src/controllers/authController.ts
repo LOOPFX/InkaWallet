@@ -14,7 +14,6 @@ import {
   verifyRefreshToken,
 } from '../middleware/auth';
 import logger from '../utils/logger';
-import { ValidationError, UnauthorizedError } from '../middleware/errorHandler';
 
 /**
  * Register new user

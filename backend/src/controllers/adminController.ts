@@ -6,7 +6,7 @@ import { RowDataPacket } from 'mysql2';
 /**
  * Get dashboard statistics
  */
-export const getDashboardStats = async (req: AuthRequest, res: Response) => {
+export const getDashboardStats = async (_req: AuthRequest, res: Response) => {
   try {
     const connection = await pool.getConnection();
 
@@ -88,7 +88,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 /**
  * Get user by ID
  */
-export const getUserById = async (req: AuthRequest, res: Response) => {
+export const getUserById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -103,7 +103,8 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
       );
 
       if (users.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
       res.json(users[0]);
@@ -205,7 +206,7 @@ export const getTransactions = async (req: AuthRequest, res: Response) => {
 /**
  * Get transaction by ID
  */
-export const getTransactionById = async (req: AuthRequest, res: Response) => {
+export const getTransactionById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -218,7 +219,8 @@ export const getTransactionById = async (req: AuthRequest, res: Response) => {
       );
 
       if (transactions.length === 0) {
-        return res.status(404).json({ error: 'Transaction not found' });
+        res.status(404).json({ error: 'Transaction not found' });
+        return;
       }
 
       res.json(transactions[0]);
@@ -326,7 +328,7 @@ export const getFeedback = async (req: AuthRequest, res: Response) => {
 /**
  * Export data as CSV
  */
-export const exportData = async (req: AuthRequest, res: Response) => {
+export const exportData = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { type } = req.params;
 
@@ -366,7 +368,8 @@ export const exportData = async (req: AuthRequest, res: Response) => {
           break;
 
         default:
-          return res.status(400).json({ error: 'Invalid export type' });
+          res.status(400).json({ error: 'Invalid export type' });
+          return;
       }
 
       // Generate CSV
