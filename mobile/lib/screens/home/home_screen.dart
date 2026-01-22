@@ -549,6 +549,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return Colors.orange;
       case models.TransactionStatus.failed:
         return Colors.red;
+      case models.TransactionStatus.cancelled:
+        return Colors.grey;
     }
   }
 }

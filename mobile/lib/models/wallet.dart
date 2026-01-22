@@ -8,6 +8,9 @@ class Wallet {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  // Getter alias for accountNumber
+  String get walletNumber => accountNumber;
+
   Wallet({
     required this.id,
     required this.userId,

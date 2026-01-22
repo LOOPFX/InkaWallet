@@ -117,7 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: 'Email or Phone',
                     hintText: 'Enter your email or phone number',
                     prefixIcon: const Icon(Icons.person),
-                    semanticLabel: 'Email or phone input field',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -148,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         accessibility.buttonTap();
                       },
                     ),
-                    semanticLabel: 'Password input field',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {

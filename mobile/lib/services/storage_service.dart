@@ -2,7 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/transaction.dart';
+import '../models/transaction.dart' as models;
 import '../utils/constants.dart';
 
 /// StorageService manages local data storage
@@ -128,7 +128,7 @@ class StorageService {
   // SQLite (Offline Transactions)
 
   /// Save transaction offline
-  static Future<void> saveTransaction(Transaction transaction) async {
+  static Future<void> saveTransaction(models.Transaction transaction) async {
     if (_database == null) return;
 
     await _database!.insert(
@@ -156,7 +156,7 @@ class StorageService {
   }
 
   /// Get all transactions
-  static Future<List<Transaction>> getAllTransactions() async {
+  static Future<List<models.Transaction>> getAllTransactions() async {
     if (_database == null) return [];
 
     final List<Map<String, dynamic>> maps = await _database!.query(
@@ -165,7 +165,7 @@ class StorageService {
     );
 
     return List.generate(maps.length, (i) {
-      return Transaction.fromJson({
+      return models.Transaction.fromJson({
         ...maps[i],
         'is_synced': maps[i]['is_synced'] == 1,
       });
@@ -173,7 +173,7 @@ class StorageService {
   }
 
   /// Get unsynced transactions
-  static Future<List<Transaction>> getUnsyncedTransactions() async {
+  static Future<List<models.Transaction>> getUnsyncedTransactions() async {
     if (_database == null) return [];
 
     final List<Map<String, dynamic>> maps = await _database!.query(
@@ -184,7 +184,7 @@ class StorageService {
     );
 
     return List.generate(maps.length, (i) {
-      return Transaction.fromJson({
+      return models.Transaction.fromJson({
         ...maps[i],
         'is_synced': false,
       });

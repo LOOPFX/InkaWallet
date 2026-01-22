@@ -19,6 +19,7 @@ class WalletProvider with ChangeNotifier {
 
   WalletStatus get status => _status;
   Wallet? get wallet => _wallet;
+  bool get isLoading => _status == WalletStatus.loading;
   double get balance => _wallet?.balance ?? 0.0;
   String? get error => _error;
 

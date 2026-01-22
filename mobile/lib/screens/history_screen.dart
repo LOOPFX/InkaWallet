@@ -381,7 +381,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               
               // Details
               _buildDetailRow('Type', isCredit ? 'Money Received' : 'Money Sent'),
-              _buildDetailRow('Reference', transaction.referenceNumber),
+              _buildDetailRow('Reference', transaction.referenceNumber ?? 'N/A'),
               _buildDetailRow('Date', transaction.formattedDate),
               if (transaction.description != null && transaction.description!.isNotEmpty)
                 _buildDetailRow('Description', transaction.description!),
@@ -565,6 +565,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         return Colors.orange;
       case models.TransactionStatus.failed:
         return Colors.red;
+      case models.TransactionStatus.cancelled:
+        return Colors.grey;
     }
   }
 }

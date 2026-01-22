@@ -3,6 +3,9 @@ enum TransactionType {
   receive,
   deposit,
   withdrawal,
+  // Aliases for compatibility
+  sent,
+  received,
 }
 
 enum TransactionStatus {
@@ -99,8 +102,10 @@ class Transaction {
   static TransactionType _parseTransactionType(String? type) {
     switch (type?.toLowerCase()) {
       case 'send':
+      case 'sent':
         return TransactionType.send;
       case 'receive':
+      case 'received':
         return TransactionType.receive;
       case 'deposit':
         return TransactionType.deposit;
@@ -131,6 +136,21 @@ class Transaction {
     final prefix = type == TransactionType.receive || 
                    type == TransactionType.deposit ? '+' : '-';
     return '$prefix$currency ${amount.toStringAsFixed(2)}';
+  }
+
+  String get formattedDate {
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+    
+    if (difference.inDays == 0) {
+      return 'Today ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
+    }
   }
 
   String get displayName {

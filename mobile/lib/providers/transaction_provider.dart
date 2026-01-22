@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../models/transaction.dart';
+import '../models/transaction.dart' as models;
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../utils/constants.dart';
@@ -20,14 +20,15 @@ class TransactionProvider with ChangeNotifier {
   final _connectivity = Connectivity();
   
   TransactionStatus _status = TransactionStatus.initial;
-  List<Transaction> _transactions = [];
-  Transaction? _currentTransaction;
+  List<models.Transaction> _transactions = [];
+  models.Transaction? _currentTransaction;
   String? _error;
   bool _isOnline = true;
 
   TransactionStatus get status => _status;
-  List<Transaction> get transactions => _transactions;
-  Transaction? get currentTransaction => _currentTransaction;
+  List<models.Transaction> get transactions => _transactions;
+  bool get isLoading => _status == TransactionStatus.loading;
+  models.Transaction? get currentTransaction => _currentTransaction;
   String? get error => _error;
   bool get isOnline => _isOnline;
 
@@ -135,22 +136,22 @@ class TransactionProvider with ChangeNotifier {
   }
 
   /// Create offline transaction
-  Transaction _createOfflineTransaction({
+  models.Transaction _createOfflineTransaction({
     required String recipientPhone,
     required double amount,
     required String walletProvider,
     String? description,
   }) {
-    return Transaction(
+    return models.Transaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       walletId: '', // Will be filled when synced
-      type: TransactionType.send,
+      type: models.TransactionType.send,
       amount: amount,
       currency: AppConstants.currencySymbol,
       recipientPhone: recipientPhone,
       recipientWalletProvider: walletProvider,
       description: description,
-      status: TransactionStatus.pending,
+      status: models.TransactionStatus.pending,
       createdAt: DateTime.now(),
       isSynced: false,
     );

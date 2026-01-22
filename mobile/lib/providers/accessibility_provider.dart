@@ -29,6 +29,7 @@ class AccessibilityProvider with ChangeNotifier {
   bool get isHapticEnabled => _isHapticEnabled;
   bool get isDarkMode => _isDarkMode;
   double get textScale => _textScale;
+  double get textScaleFactor => _textScale; // Alias for compatibility
   bool get boldText => _boldText;
   String? get lastSpokenText => _lastSpokenText;
 
@@ -46,11 +47,12 @@ class AccessibilityProvider with ChangeNotifier {
   }
 
   /// Toggle inclusive mode
-  Future<void> toggleInclusiveMode(bool enabled) async {
-    _isInclusiveModeEnabled = enabled;
-    await StorageService.setInclusiveMode(enabled);
+  Future<void> toggleInclusiveMode([bool? enabled]) async {
+    final newValue = enabled ?? !_isInclusiveModeEnabled;
+    _isInclusiveModeEnabled = newValue;
+    await StorageService.setInclusiveMode(newValue);
     
-    if (!enabled) {
+    if (!newValue) {
       // Disable voice and haptic when inclusive mode is off
       _isVoiceEnabled = false;
       _isHapticEnabled = false;
@@ -60,35 +62,37 @@ class AccessibilityProvider with ChangeNotifier {
     notifyListeners();
     
     if (_isVoiceEnabled) {
-      await speak(enabled ? 
+      await speak(newValue ? 
         'Inclusive mode enabled. Voice commands and haptic feedback are active.' :
         'Inclusive mode disabled.');
     }
   }
 
   /// Toggle voice commands
-  Future<void> toggleVoice(bool enabled) async {
-    _isVoiceEnabled = enabled;
-    await StorageService.saveSetting('voice_enabled', enabled);
+  Future<void> toggleVoice([bool? enabled]) async {
+    final newValue = enabled ?? !_isVoiceEnabled;
+    _isVoiceEnabled = newValue;
+    await StorageService.saveSetting('voice_enabled', newValue);
     notifyListeners();
     
-    if (enabled) {
+    if (newValue) {
       await speak('Voice feedback enabled');
     }
   }
 
   /// Toggle haptic feedback
-  Future<void> toggleHaptic(bool enabled) async {
-    _isHapticEnabled = enabled;
-    await StorageService.saveSetting('haptic_enabled', enabled);
-    hapticService.setEnabled(enabled);
+  Future<void> toggleHaptic([bool? enabled]) async {
+    final newValue = enabled ?? !_isHapticEnabled;
+    _isHapticEnabled = newValue;
+    await StorageService.saveSetting('haptic_enabled', newValue);
+    hapticService.setEnabled(newValue);
     notifyListeners();
     
     if (_isVoiceEnabled) {
-      await speak(enabled ? 'Haptic feedback enabled' : 'Haptic feedback disabled');
+      await speak(newValue ? 'Haptic feedback enabled' : 'Haptic feedback disabled');
     }
     
-    if (enabled) {
+    if (newValue) {
       await hapticService.mediumTap();
     }
   }
@@ -102,6 +106,11 @@ class AccessibilityProvider with ChangeNotifier {
     if (_isVoiceEnabled) {
       await speak(enabled ? 'Dark mode enabled' : 'Light mode enabled');
     }
+  }
+
+  /// Toggle theme (alias for toggleDarkMode)
+  Future<void> toggleTheme() async {
+    await toggleDarkMode(!_isDarkMode);
   }
 
   /// Set text scale
@@ -191,6 +200,11 @@ class AccessibilityProvider with ChangeNotifier {
   Future<void> buttonTap() async {
     if (!_isHapticEnabled) return;
     await hapticService.buttonPress();
+  }
+
+  /// Haptic feedback for button press (alias)
+  Future<void> buttonPressFeedback() async {
+    await buttonTap();
   }
 
   /// Haptic feedback for input

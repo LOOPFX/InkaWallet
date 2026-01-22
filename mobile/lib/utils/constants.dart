@@ -35,6 +35,7 @@ class AppConstants {
   
   // Security
   static const int pinLength = 4;
+  static const int minPasswordLength = 6;
   static const int sessionTimeout = 15; // minutes
   static const int maxLoginAttempts = 3;
   static const int tokenRefreshInterval = 50; // minutes (refresh before expiry)
