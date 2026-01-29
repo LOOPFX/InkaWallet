@@ -32,9 +32,9 @@ dependencies:
 
   # Voice & Accessibility
   flutter_tts: ^4.0.2
-  speech_to_text: ^6.6.0
+  # speech_to_text: ^6.6.0  # Removed due to compilation issues
   audioplayers: ^5.2.1
-  vibration: ^1.8.4
+  # vibration: ^1.8.4  # Removed due to v1 embedding issues
 
   # UI
   cupertino_icons: ^1.0.6
@@ -52,7 +52,7 @@ dependencies:
 
   # QR Code
   qr_flutter: ^4.1.0
-  qr_code_scanner: ^1.0.1
+  # qr_code_scanner: ^1.0.1  # Removed due to namespace issue
 
   # Biometrics
   flutter_screen_lock: ^9.0.1

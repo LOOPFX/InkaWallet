@@ -1,4 +1,5 @@
-import 'package:vibration/vibration.dart';
+// import 'package:vibration/vibration.dart'; // Removed due to v1 embedding issues
+import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../utils/constants.dart';
 
@@ -14,7 +15,8 @@ class HapticService {
   }
 
   Future<void> _checkVibrationSupport() async {
-    _hasVibrator = await Vibration.hasVibrator() ?? false;
+    // _hasVibrator = await Vibration.hasVibrator() ?? false;
+    _hasVibrator = false; // Vibration disabled
   }
 
   /// Enable or disable haptic feedback
@@ -24,12 +26,10 @@ class HapticService {
 
   /// Short tap feedback
   Future<void> lightTap() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        duration: AppConstants.hapticShortDuration,
-      );
+      await HapticFeedback.lightImpact();
     } catch (e) {
       print('Haptic error: $e');
     }
@@ -37,12 +37,10 @@ class HapticService {
 
   /// Medium tap feedback
   Future<void> mediumTap() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        duration: AppConstants.hapticMediumDuration,
-      );
+      await HapticFeedback.mediumImpact();
     } catch (e) {
       print('Haptic error: $e');
     }
@@ -50,12 +48,10 @@ class HapticService {
 
   /// Heavy tap feedback
   Future<void> heavyTap() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        duration: AppConstants.hapticLongDuration,
-      );
+      await HapticFeedback.heavyImpact();
     } catch (e) {
       print('Haptic error: $e');
     }
@@ -63,12 +59,10 @@ class HapticService {
 
   /// Success pattern (short-short-long)
   Future<void> success() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        pattern: [0, 50, 100, 50, 100, 200],
-      );
+      await HapticFeedback.mediumImpact();
       await _playSound('success');
     } catch (e) {
       print('Haptic error: $e');
@@ -77,12 +71,10 @@ class HapticService {
 
   /// Error pattern (long-long)
   Future<void> error() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        pattern: [0, 200, 100, 200],
-      );
+      await HapticFeedback.heavyImpact();
       await _playSound('error');
     } catch (e) {
       print('Haptic error: $e');
@@ -91,12 +83,10 @@ class HapticService {
 
   /// Warning pattern (medium-short-medium)
   Future<void> warning() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        pattern: [0, 100, 50, 50, 50, 100],
-      );
+      await HapticFeedback.mediumImpact();
       await _playSound('warning');
     } catch (e) {
       print('Haptic error: $e');
@@ -105,12 +95,10 @@ class HapticService {
 
   /// Transaction sent pattern
   Future<void> transactionSent() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        pattern: [0, 100, 50, 100, 50, 100],
-      );
+      await HapticFeedback.lightImpact();
       await _playSound('send');
     } catch (e) {
       print('Haptic error: $e');
@@ -119,12 +107,10 @@ class HapticService {
 
   /// Transaction received pattern
   Future<void> transactionReceived() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        pattern: [0, 50, 50, 50, 50, 50],
-      );
+      await HapticFeedback.lightImpact();
       await _playSound('receive');
     } catch (e) {
       print('Haptic error: $e');
@@ -133,12 +119,10 @@ class HapticService {
 
   /// Button press feedback
   Future<void> buttonPress() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        duration: AppConstants.hapticShortDuration,
-      );
+      await HapticFeedback.selectionClick();
     } catch (e) {
       print('Haptic error: $e');
     }
@@ -146,12 +130,10 @@ class HapticService {
 
   /// Navigation feedback
   Future<void> navigation() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        duration: AppConstants.hapticMediumDuration,
-      );
+      await HapticFeedback.lightImpact();
     } catch (e) {
       print('Haptic error: $e');
     }
@@ -159,12 +141,10 @@ class HapticService {
 
   /// Input feedback
   Future<void> input() async {
-    if (!_isEnabled || !_hasVibrator) return;
+    if (!_isEnabled) return;
     
     try {
-      await Vibration.vibrate(
-        duration: 30,
-      );
+      await HapticFeedback.selectionClick();
     } catch (e) {
       print('Haptic error: $e');
     }
@@ -185,13 +165,9 @@ class HapticService {
     }
   }
 
-  /// Cancel all vibrations
+  /// Cancel all vibrations (no-op for HapticFeedback)
   Future<void> cancel() async {
-    try {
-      await Vibration.cancel();
-    } catch (e) {
-      print('Haptic cancel error: $e');
-    }
+    // HapticFeedback doesn't need explicit cancellation
   }
 
   bool get isEnabled => _isEnabled;
@@ -199,7 +175,6 @@ class HapticService {
 
   /// Dispose resources
   Future<void> dispose() async {
-    await cancel();
     await _audioPlayer.dispose();
   }
 }

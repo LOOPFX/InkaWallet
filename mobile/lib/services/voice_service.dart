@@ -1,5 +1,5 @@
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+// import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../utils/constants.dart';
@@ -8,7 +8,7 @@ import '../utils/constants.dart';
 /// Integrates with Speechmatics API for enhanced voice recognition
 class VoiceService {
   final FlutterTts _flutterTts = FlutterTts();
-  final stt.SpeechToText _speech = stt.SpeechToText();
+  // final stt.SpeechToText _speech = stt.SpeechToText();
   
   bool _isInitialized = false;
   bool _isSpeaking = false;
@@ -71,23 +71,23 @@ class VoiceService {
     }
   }
 
-  /// Initialize speech recognition
+  /// Initialize speech recognition (disabled - speech_to_text removed)
   Future<bool> initializeSpeechRecognition() async {
-    if (!_speech.isAvailable) {
-      return await _speech.initialize(
-        onError: (error) {
-          print('Speech recognition error: $error');
-          _isListening = false;
-        },
-        onStatus: (status) {
-          print('Speech recognition status: $status');
-          if (status == 'done' || status == 'notListening') {
-            _isListening = false;
-          }
-        },
-      );
-    }
-    return true;
+    // if (!_speech.isAvailable) {
+    //   return await _speech.initialize(
+    //     onError: (error) {
+    //       print('Speech recognition error: $error');
+    //       _isListening = false;
+    //     },
+    //     onStatus: (status) {
+    //       print('Speech recognition status: $status');
+    //       if (status == 'done' || status == 'notListening') {
+    //         _isListening = false;
+    //       }
+    //     },
+    //   );
+    // }
+    return false; // Speech recognition disabled
   }
 
   /// Start listening for voice commands
@@ -120,28 +120,29 @@ class VoiceService {
     return result;
   }
 
-  /// Listen using built-in speech recognition
+  /// Listen using built-in speech recognition (disabled)
   Future<String?> _listenWithBuiltIn(Duration timeout) async {
-    String? recognizedText;
-    
-    await _speech.listen(
-      onResult: (result) {
-        recognizedText = result.recognizedWords;
-      },
-      listenFor: timeout,
-      pauseFor: const Duration(seconds: 3),
-      partialResults: false,
-    );
-
-    // Wait for result or timeout
-    int elapsed = 0;
-    while (elapsed < timeout.inSeconds && recognizedText == null && _isListening) {
-      await Future.delayed(const Duration(milliseconds: 100));
-      elapsed++;
-    }
-
-    await _speech.stop();
-    return recognizedText;
+    // String? recognizedText;
+    // 
+    // await _speech.listen(
+    //   onResult: (result) {
+    //     recognizedText = result.recognizedWords;
+    //   },
+    //   listenFor: timeout,
+    //   pauseFor: const Duration(seconds: 3),
+    //   partialResults: false,
+    // );
+    //
+    // // Wait for result or timeout
+    // int elapsed = 0;
+    // while (elapsed < timeout.inSeconds && recognizedText == null && _isListening) {
+    //   await Future.delayed(const Duration(milliseconds: 100));
+    //   elapsed++;
+    // }
+    //
+    // await _speech.stop();
+    // return recognizedText;
+    return null; // Speech recognition disabled
   }
 
   /// Listen using Speechmatics API for better accuracy
@@ -260,8 +261,8 @@ class VoiceService {
   /// Dispose resources
   Future<void> dispose() async {
     await stop();
-    if (_speech.isListening) {
-      await _speech.stop();
-    }
+    // if (_speech.isListening) {
+    //   await _speech.stop();
+    // }
   }
 }
