@@ -24,7 +24,7 @@ router.get('/stats', authenticateToken, isAdmin, async (req: AuthRequest, res: R
 // List users
 router.get('/users', authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
   try {
-    const [rows]: any = await db.query('SELECT id, email, full_name, phone_number, is_active, accessibility_enabled FROM users');
+    const [rows]: any = await db.query('SELECT id, email, full_name, phone_number, is_active, is_admin, accessibility_enabled FROM users');
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch users' });
@@ -49,6 +49,17 @@ router.put('/users/:id/deactivate', authenticateToken, isAdmin, async (req: Auth
     res.json({ message: 'User deactivated' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to deactivate user' });
+  }
+});
+
+// Activate user
+router.put('/users/:id/activate', authenticateToken, isAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    await db.query('UPDATE users SET is_active = TRUE WHERE id = ?', [id]);
+    res.json({ message: 'User activated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to activate user' });
   }
 });
 
