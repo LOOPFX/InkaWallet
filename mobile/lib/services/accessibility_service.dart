@@ -16,11 +16,13 @@ class AccessibilityService {
   bool _voiceEnabled = true;
   bool _hapticsEnabled = true;
   bool _isListening = false;
+  bool _voiceControlEnabled = false;
   
   bool get isAccessibilityEnabled => _accessibilityEnabled;
   bool get isVoiceEnabled => _voiceEnabled;
   bool get isHapticsEnabled => _hapticsEnabled;
   bool get isListening => _isListening;
+  bool get isVoiceControlEnabled => _voiceControlEnabled;
   
   Future<void> initialize() async {
     await _loadSettings();
@@ -33,12 +35,22 @@ class AccessibilityService {
     _accessibilityEnabled = prefs.getBool('accessibility_enabled') ?? true;
     _voiceEnabled = prefs.getBool('voice_enabled') ?? true;
     _hapticsEnabled = prefs.getBool('haptics_enabled') ?? true;
+    _voiceControlEnabled = prefs.getBool('voice_control_enabled') ?? false;
   }
   
   Future<void> _configureTTS() async {
     await _tts.setLanguage('en-US');
     await _tts.setSpeechRate(0.5);
     await _tts.setVolume(1.0);
+    
+    // Set up TTS completion handler
+    _tts.setCompletionHandler(() {
+      debugPrint('TTS completed');
+    });
+    
+    _tts.setErrorHandler((msg) {
+      debugPrint('TTS error: $msg');
+    });
     await _tts.setPitch(1.0);
   }
   
@@ -100,15 +112,38 @@ class AccessibilityService {
     return result;
   }
   
-  Future<void> stopListening() async {
-    await _stt.stop();
-    _isListening = false;
+    bool? voiceControlEnabled,
+  }) async {
+    _accessibilityEnabled = accessibilityEnabled;
+    _voiceEnabled = voiceEnabled;
+    _hapticsEnabled = hapticsEnabled;
+    if (voiceControlEnabled != null) {
+      _voiceControlEnabled = voiceControlEnabled;
+    }
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('accessibility_enabled', accessibilityEnabled);
+    await prefs.setBool('voice_enabled', voiceEnabled);
+    await prefs.setBool('haptics_enabled', hapticsEnabled);
+    if (voiceControlEnabled != null) {
+      await prefs.setBool('voice_control_enabled', voiceControlEnabled);
+    }
   }
   
-  Future<void> updateSettings({
-    required bool accessibilityEnabled,
-    required bool voiceEnabled,
-    required bool hapticsEnabled,
+  Future<void> enableVoiceControl() async {
+    _voiceControlEnabled = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('voice_control_enabled', true);
+    await speak('Voice control enabled. You can now navigate the app using voice commands.');
+    await vibratePattern();
+  }
+  
+  Future<void> disableVoiceControl() async {
+    _voiceControlEnabled = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('voice_control_enabled', false);
+    await speak('Voice control disabled.');
+    await vibrate(
   }) async {
     _accessibilityEnabled = accessibilityEnabled;
     _voiceEnabled = voiceEnabled;

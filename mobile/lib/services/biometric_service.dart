@@ -1,0 +1,187 @@
+import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+enum BiometricType {
+  fingerprint,
+  face,
+  iris,
+  none,
+}
+
+class BiometricService {
+  static final BiometricService _instance = BiometricService._internal();
+  factory BiometricService() => _instance;
+  BiometricService._internal();
+
+  final LocalAuthentication _auth = LocalAuthentication();
+  
+  bool _isEnabled = false;
+  List<BiometricType> _availableTypes = [];
+  
+  bool get isEnabled => _isEnabled;
+  List<BiometricType> get availableTypes => _availableTypes;
+  
+  /// Initialize biometric service and check availability
+  Future<void> initialize() async {
+    await _loadSettings();
+    await checkAvailability();
+  }
+  
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isEnabled = prefs.getBool('biometric_enabled') ?? false;
+  }
+  
+  /// Check if device supports biometric authentication
+  Future<bool> checkAvailability() async {
+    try {
+      final canCheckBiometrics = await _auth.canCheckBiometrics;
+      final isDeviceSupported = await _auth.isDeviceSupported();
+      
+      if (canCheckBiometrics && isDeviceSupported) {
+        final availableBiometrics = await _auth.getAvailableBiometrics();
+        _availableTypes = _mapBiometricTypes(availableBiometrics);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Biometric check error: $e');
+      return false;
+    }
+  }
+  
+  List<BiometricType> _mapBiometricTypes(List<BiometricType> types) {
+    final mapped = <BiometricType>[];
+    
+    for (var type in types) {
+      switch (type) {
+        case BiometricType.fingerprint:
+          mapped.add(BiometricType.fingerprint);
+          break;
+        case BiometricType.face:
+          mapped.add(BiometricType.face);
+          break;
+        case BiometricType.iris:
+          mapped.add(BiometricType.iris);
+          break;
+        default:
+          break;
+      }
+    }
+    
+    return mapped.isEmpty ? [BiometricType.none] : mapped;
+  }
+  
+  /// Authenticate user with biometrics
+  Future<bool> authenticate({
+    String reason = 'Please authenticate to continue',
+    bool useErrorDialogs = true,
+    bool stickyAuth = true,
+  }) async {
+    if (!_isEnabled) {
+      return false;
+    }
+    
+    try {
+      final isAvailable = await checkAvailability();
+      if (!isAvailable) {
+        return false;
+      }
+      
+      final authenticated = await _auth.authenticate(
+        localizedReason: reason,
+        options: AuthenticationOptions(
+          useErrorDialogs: useErrorDialogs,
+          stickyAuth: stickyAuth,
+          biometricOnly: true,
+        ),
+      );
+      
+      return authenticated;
+    } on PlatformException catch (e) {
+      print('Biometric authentication error: ${e.message}');
+      return false;
+    }
+  }
+  
+  /// Authenticate for login
+  Future<bool> authenticateForLogin() async {
+    return await authenticate(
+      reason: 'Authenticate to log in to InkaWallet',
+      useErrorDialogs: true,
+      stickyAuth: true,
+    );
+  }
+  
+  /// Authenticate for transactions
+  Future<bool> authenticateForTransaction(double amount) async {
+    return await authenticate(
+      reason: 'Authenticate to confirm transaction of MKW ${amount.toStringAsFixed(2)}',
+      useErrorDialogs: true,
+      stickyAuth: true,
+    );
+  }
+  
+  /// Authenticate for settings
+  Future<bool> authenticateForSettings() async {
+    return await authenticate(
+      reason: 'Authenticate to change security settings',
+      useErrorDialogs: true,
+      stickyAuth: true,
+    );
+  }
+  
+  /// Enable biometric authentication
+  Future<bool> enableBiometric() async {
+    final authenticated = await authenticate(
+      reason: 'Authenticate to enable biometric login',
+    );
+    
+    if (authenticated) {
+      _isEnabled = true;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('biometric_enabled', true);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /// Disable biometric authentication
+  Future<void> disableBiometric() async {
+    _isEnabled = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('biometric_enabled', false);
+  }
+  
+  /// Get biometric types as user-friendly strings
+  String getBiometricTypeName(BiometricType type) {
+    switch (type) {
+      case BiometricType.fingerprint:
+        return 'Fingerprint';
+      case BiometricType.face:
+        return 'Face Recognition';
+      case BiometricType.iris:
+        return 'Iris Scan';
+      case BiometricType.none:
+        return 'None Available';
+    }
+  }
+  
+  /// Get available biometrics as formatted string
+  String getAvailableBiometricsString() {
+    if (_availableTypes.isEmpty || _availableTypes.contains(BiometricType.none)) {
+      return 'No biometric authentication available';
+    }
+    
+    return _availableTypes
+        .map((type) => getBiometricTypeName(type))
+        .join(', ');
+  }
+  
+  /// Check if specific biometric type is available
+  bool hasFingerprint() => _availableTypes.contains(BiometricType.fingerprint);
+  bool hasFaceRecognition() => _availableTypes.contains(BiometricType.face);
+  bool hasIris() => _availableTypes.contains(BiometricType.iris);
+}
