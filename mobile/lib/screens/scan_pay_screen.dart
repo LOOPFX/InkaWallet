@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart' as mlkit;
+import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/api_service.dart';
 import 'send_money_screen.dart';
@@ -16,7 +17,7 @@ class ScanPayScreen extends StatefulWidget {
 class _ScanPayScreenState extends State<ScanPayScreen> {
   final _apiService = ApiService();
   MobileScannerController cameraController = MobileScannerController();
-  final BarcodeScanner _barcodeScanner = BarcodeScanner();
+  final mlkit.BarcodeScanner _barcodeScanner = mlkit.BarcodeScanner();
   bool _isProcessing = false;
 
   @override
@@ -54,7 +55,7 @@ class _ScanPayScreenState extends State<ScanPayScreen> {
         try {
           // Decode QR code from image
           final inputImage = InputImage.fromFilePath(image.path);
-          final List<Barcode> barcodes = await _barcodeScanner.processImage(inputImage);
+          final List<mlkit.Barcode> barcodes = await _barcodeScanner.processImage(inputImage);
           
           if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
             await _processQRCode(barcodes.first.rawValue!);
@@ -169,7 +170,7 @@ class _ScanPayScreenState extends State<ScanPayScreen> {
           MobileScanner(
             controller: cameraController,
             onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
+              final barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null && !_isProcessing) {
                   _processQRCode(barcode.rawValue!);

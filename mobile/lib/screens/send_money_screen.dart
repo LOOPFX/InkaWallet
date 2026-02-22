@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import '../providers/wallet_provider.dart';
 import '../services/accessibility_service.dart';
+import '../services/voice_command_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class SendMoneyScreen extends StatefulWidget {
   final String? prefilledRecipient;
@@ -24,7 +26,10 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _accessibility = AccessibilityService();
+  final _voiceService = VoiceCommandService();
   String _paymentMethod = 'inkawallet';
+  bool _expectingPhoneInput = false;
+  bool _expectingAmountInput = false;
   
   @override
   void initState() {
@@ -96,38 +101,125 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     }
   }
 
+  Future<void> _handleVoiceCommand(Map<String, dynamic> command) async {
+    final commandText = command['command'] as String? ?? '';
+    final lowerCommand = commandText.toLowerCase();
+    
+    // Extract phone number
+    if (_expectingPhoneInput || lowerCommand.contains('phone') || lowerCommand.contains('number')) {
+      final phoneMatch = RegExp(r'\d{10,15}').firstMatch(commandText);
+      if (phoneMatch != null) {
+        setState(() {
+          _phoneController.text = phoneMatch.group(0)!;
+          _expectingPhoneInput = false;
+        });
+        await _accessibility.speak('Phone number set. What amount would you like to send?');
+        setState(() => _expectingAmountInput = true);
+        return;
+      }
+      await _accessibility.speak('I could not detect a phone number. Please say the phone number again or type it manually');
+      return;
+    }
+    
+    // Extract amount
+    if (_expectingAmountInput || lowerCommand.contains('amount') || lowerCommand.contains('send')) {
+      final amountMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(commandText);
+      if (amountMatch != null) {
+        final amount = amountMatch.group(1)!;
+        setState(() {
+          _amountController.text = amount;
+          _expectingAmountInput = false;
+        });
+        await _accessibility.speak('Amount set to $amount kwacha. Say confirm to send or cancel to abort');
+        return;
+      }
+      await _accessibility.speak('I could not detect an amount. Please say the amount again');
+      return;
+    }
+    
+    // Confirm transaction
+    if (lowerCommand.contains('confirm') || lowerCommand.contains('yes') || lowerCommand.contains('send')) {
+      if (_phoneController.text.isEmpty) {
+        await _accessibility.speak('Please provide a phone number first');
+        setState(() => _expectingPhoneInput = true);
+        return;
+      }
+      if (_amountController.text.isEmpty) {
+        await _accessibility.speak('Please provide an amount first');
+        setState(() => _expectingAmountInput = true);
+        return;
+      }
+      await _accessibility.speak('Sending money now');
+      await _sendMoney();
+      return;
+    }
+    
+    // Cancel transaction
+    if (lowerCommand.contains('cancel') || lowerCommand.contains('back') || lowerCommand.contains('no')) {
+      await _accessibility.speak('Transaction cancelled');
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      return;
+    }
+    
+    // Payment method change
+    if (lowerCommand.contains('payment') || lowerCommand.contains('method')) {
+      if (lowerCommand.contains('mpamba') || lowerCommand.contains('tnm')) {
+        setState(() => _paymentMethod = 'mpamba');
+        await _accessibility.speak('Payment method set to TNM Mpamba');
+      } else if (lowerCommand.contains('airtel')) {
+        setState(() => _paymentMethod = 'airtel_money');
+        await _accessibility.speak('Payment method set to Airtel Money');
+      } else if (lowerCommand.contains('bank')) {
+        setState(() => _paymentMethod = 'bank');
+        await _accessibility.speak('Payment method set to Bank Transfer');
+      } else {
+        setState(() => _paymentMethod = 'inkawallet');
+        await _accessibility.speak('Payment method set to InkaWallet');
+      }
+      return;
+    }
+    
+    // Help
+    await _accessibility.speak('You can say: phone number, amount, payment method, confirm, or cancel');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Send Money'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Recipient Phone Number',
-                  prefixIcon: const Icon(Icons.phone),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.contacts),
-                    onPressed: _pickContact,
-                    tooltip: 'Pick from contacts',
+    return VoiceEnabledScreen(
+      screenName: 'Send Money',
+      onVoiceCommand: _handleVoiceCommand,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Send Money'),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Recipient Phone Number',
+                    prefixIcon: const Icon(Icons.phone),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.contacts),
+                      onPressed: _pickContact,
+                      tooltip: 'Pick from contacts',
+                    ),
+                    hintText: '+265888123456',
                   ),
-                  hintText: '+265888123456',
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter phone number'
+                      : null,
+                  onTap: () => _accessibility.speak('Recipient phone number field'),
                 ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter phone number'
-                    : null,
-                onTap: () => _accessibility.speak('Recipient phone number field'),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
               
               TextFormField(
                 controller: _amountController,
@@ -216,6 +308,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

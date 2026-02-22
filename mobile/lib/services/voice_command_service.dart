@@ -31,7 +31,7 @@ class VoiceCommandService {
   Future<void> activate() async {
     _isActive = true;
     await _accessibility.speak('Voice command mode activated. Say help for available commands.');
-    await _vibrateSuccess();
+    await vibrateSuccess();
   }
   
   /// Deactivate voice command mode
@@ -39,7 +39,7 @@ class VoiceCommandService {
     _isActive = false;
     _isListening = false;
     await _accessibility.speak('Voice command mode deactivated.');
-    await _vibrateDouble();
+    await vibrateDouble();
   }
   
   /// Start listening for voice command
@@ -54,7 +54,7 @@ class VoiceCommandService {
     _currentContext = context;
     _isListening = true;
     
-    await _vibrateShort();
+    await vibrateShort();
     await _accessibility.speak('Listening...');
     
     try {
@@ -64,16 +64,16 @@ class VoiceCommandService {
         _commandHistory.add(transcript);
         final intent = _speechmatics.extractIntent(transcript);
         
-        await _vibrateSuccess();
+        await vibrateSuccess();
         return await _processCommand(intent);
       } else {
         await _accessibility.speak('No command detected. Please try again.');
-        await _vibrateError();
+        await vibrateError();
         return null;
       }
     } catch (e) {
       await _accessibility.speak('Error processing command: ${e.toString()}');
-      await _vibrateError();
+      await vibrateError();
       return null;
     } finally {
       _isListening = false;
@@ -280,25 +280,25 @@ class VoiceCommandService {
   }
   
   /// Vibration patterns
-  Future<void> _vibrateShort() async {
+  Future<void> vibrateShort() async {
     if (await Vibration.hasVibrator() == true) {
       await Vibration.vibrate(duration: 50);
     }
   }
   
-  Future<void> _vibrateDouble() async {
+  Future<void> vibrateDouble() async {
     if (await Vibration.hasVibrator() == true) {
       await Vibration.vibrate(pattern: [0, 100, 100, 100]);
     }
   }
   
-  Future<void> _vibrateSuccess() async {
+  Future<void> vibrateSuccess() async {
     if (await Vibration.hasVibrator() == true) {
       await Vibration.vibrate(pattern: [0, 50, 50, 50, 50, 50]);
     }
   }
   
-  Future<void> _vibrateError() async {
+  Future<void> vibrateError() async {
     if (await Vibration.hasVibrator() == true) {
       await Vibration.vibrate(pattern: [0, 200, 100, 200]);
     }

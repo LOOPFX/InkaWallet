@@ -94,6 +94,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -105,37 +107,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Accessibility Features',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          Card(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.accessibility_new),
-                      SizedBox(width: 8),
-                      Text(
-                        'Full Accessibility Mode',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Enable voice guidance, haptics, and screen reader support for complete hands-free navigation.',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ),
           const SizedBox(height: 16),
           
+          // Accessibility master switch
           SwitchListTile(
             title: const Text('Enable Accessibility'),
             subtitle: const Text('Master switch for all accessibility features'),
@@ -149,6 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           
+          // Voice guidance
           SwitchListTile(
             title: const Text('Voice Guidance'),
             subtitle: const Text('Text-to-speech announcements'),
@@ -156,20 +131,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: _accessibilityEnabled
                 ? (value) {
                     setState(() => _voiceEnabled = value);
-               biometricAvailable)
+                    _updateSettings();
+                    _accessibility.speak(
+                      value ? 'Voice guidance enabled' : 'Voice guidance disabled',
+                    );
+                  }
+                : null,
+          ),
+          
+          // Haptic feedback
+          SwitchListTile(
+            title: const Text('Haptic Feedback'),
+            subtitle: const Text('Vibration for navigation and confirmations'),
+            value: _hapticsEnabled,
+            onChanged: _accessibilityEnabled
+                ? (value) async {
+                    setState(() => _hapticsEnabled = value);
+                    _updateSettings();
+                    if (value) await _voiceCommand.vibrateSuccess();
+                  }
+                : null,
+          ),
+          
+          // Voice control
+          SwitchListTile(
+            title: const Text('Voice Control'),
+            subtitle: const Text('Control app with voice commands (Siri-like)'),
+            value: _voiceControlEnabled,
+            onChanged: _accessibilityEnabled
+                ? (value) {
+                    setState(() => _voiceControlEnabled = value);
+                    _updateSettings();
+                    _accessibility.speak(
+                      value ? 'Voice control enabled. You can now use voice commands' : 'Voice control disabled',
+                    );
+                  }
+                : null,
+          ),
+          
+          const Divider(height: 32),
+          
+          // Biometric authentication section
+          if (_biometricAvailable)
             Card(
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(
-                      _biometric.hasFaceRecognition() 
-                          ? Icons.face 
-                          : _biometric.hasFingerprint()
-                              ? Icons.fingerprint
-                              : Icons.security,
-                    ),
+                    leading: const Icon(Icons.fingerprint),
                     title: const Text('Biometric Authentication'),
-                    subtitle: Text(_biometric.getAvailableBiometricsString()),
+                    subtitle: const Text('Fingerprint, Face ID, or Iris scan'),
                   ),
                   SwitchListTile(
                     title: const Text('Enable Biometric Login'),
@@ -200,95 +210,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const ListTile(
               leading: Icon(Icons.warning, color: Colors.orange),
               title: Text('Biometric Not Available'),
-              subtitle: Text('Your device does not support biometric authentication')     }
-                    _updateSettings();
-                  }
-                : null,
-          ),
-          
-          SwitchListTile(
-            title: const Text('Haptic Feedback'),
-            subtitle: const Text('Vibration for navigation and confirmations'),
-            value: _hapticsEnabled,
-            onChanged: _accessibilityEnabled
-                ? (value) async {
-                    setState(() => _hapticsEnabled = value);
-                    _updateSettings();
-                    if (value) await _voiceCommand.vibrateSuccess();
-                  }
-                : null,
-          );      }
-                : null,
-          ),
-          
-          const Divider(height: 32),
-          
-          const Text(
-            'Security',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          
-          if (_canCheckBiometrics)
-            SwitchListTile(
-              title: const Text('Biometric Authentication'),
-              subtitle: const Text('Fingerprint or face unlock'),
-              value: _biometricEnabled,
-              onChanged: (value) async {
-                if (value) {
-                  try {
-                    final authenticated = await _auth.authenticate(
-                      localizedReason: 'Enable biometric authentication',
-                    );
-                    if (authenticated) {
-                      setState(() => _biometricEnabled = true);
-                      _updateSettings();
-                    }
-                  } catch (e) {
-                    debugPrint('Biometric error: $e');
-                  }
-                } else {
-                  setState(() => _biometricEnabled = false);
-                  _updateSettings();
-                }
-              },
+              subtitle: Text('Your device does not support biometric authentication'),
             ),
           
           const Divider(height: 32),
           
+          // Theme section
           const Text(
             'Appearance',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ), - Accessible Digital Wallet'),
-            onTap: () => _accessibility.speak('InkaWallet version 1.0.0. Accessible Digital Wallet for Everyone'),
           ),
+          const SizedBox(height: 8),
           
-          if (_voiceControlEnabled)
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Voice Commands Help'),
-              subtitle: const Text('Learn available voice commands'),
-              onTap: () async {
-                await _voiceCommand.provideHelp();
-              },
-            ),
-          
-          const SizedBox(height: 24),
-          
-          ElevatedButton.icon(
-            onPressed: _logout,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              padding: const EdgeInsets.all(16),
-            ),
-            icon: const Icon(Icons.logout),
-            label value ? 'Dark mode enabled' : 'Dark mode disabled',
-                );
-              },
-            ),
+          SwitchListTile(
+            title: const Text('Dark Mode'),
+            subtitle: const Text('Use dark theme'),
+            value: themeProvider.isDarkMode,
+            onChanged: (value) {
+              themeProvider.toggleTheme();
+              _accessibility.speak(
+                value ? 'Dark mode enabled' : 'Dark mode disabled',
+              );
+            },
           ),
           
           const Divider(height: 32),
+          
+          // Help section
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Voice Commands Help'),
+            subtitle: const Text('Learn available voice commands'),
+            onTap: () async {
+              await _voiceCommand.provideHelp();
+            },
+          ),
           
           ListTile(
             leading: const Icon(Icons.info_outline),
@@ -299,12 +255,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           const SizedBox(height: 24),
           
-          ElevatedButton(
+          // Logout button
+          ElevatedButton.icon(
             onPressed: _logout,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              padding: const EdgeInsets.all(16),
             ),
-            child: const Text('Logout'),
+            icon: const Icon(Icons.logout),
+            label: const Text('Logout'),
           ),
         ],
       ),

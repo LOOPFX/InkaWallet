@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/voice_command_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class ReceiveMoneyScreen extends StatefulWidget {
   const ReceiveMoneyScreen({super.key});
@@ -19,8 +21,11 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _accessibility = AccessibilityService();
+  final _voiceService = VoiceCommandService();
   final _api = ApiService();
   bool _isLoading = false;
+  bool _expectingPhoneInput = false;
+  bool _expectingAmountInput = false;
   
   @override
   void initState() {
@@ -89,7 +94,7 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
                 children: [
                   Text('Request ID: ${response['request_id']}'),
                   const SizedBox(height: 8),
-                  Text('Amount: MKW ${double.parse(_amountController.text).toLocaleString()}'),
+                  Text('Amount: MKW ${double.parse(_amountController.text).toStringAsFixed(2)}'),
                   const SizedBox(height: 16),
                   const Text('Payment Link:', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
@@ -139,41 +144,110 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
     }
   }
 
+  Future<void> _handleVoiceCommand(Map<String, dynamic> command) async {
+    final commandText = command['command'] as String? ?? '';
+    final lowerCommand = commandText.toLowerCase();
+    
+    // Extract phone/email
+    if (_expectingPhoneInput || lowerCommand.contains('phone') || lowerCommand.contains('email')) {
+      final phoneMatch = RegExp(r'\d{10,15}').firstMatch(commandText);
+      if (phoneMatch != null) {
+        setState(() {
+          _payerController.text = phoneMatch.group(0)!;
+          _expectingPhoneInput = false;
+        });
+        await _accessibility.speak('Payer phone set. What amount would you like to request?');
+        setState(() => _expectingAmountInput = true);
+        return;
+      }
+      await _accessibility.speak('I could not detect a phone number. Please try again');
+      return;
+    }
+    
+    // Extract amount
+    if (_expectingAmountInput || lowerCommand.contains('amount') || lowerCommand.contains('request')) {
+      final amountMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(commandText);
+      if (amountMatch != null) {
+        final amount = amountMatch.group(1)!;
+        setState(() {
+          _amountController.text = amount;
+          _expectingAmountInput = false;
+        });
+        await _accessibility.speak('Amount set to $amount kwacha. Say confirm to create request or cancel to abort');
+        return;
+      }
+      await _accessibility.speak('I could not detect an amount. Please say the amount again');
+      return;
+    }
+    
+    // Confirm request
+    if (lowerCommand.contains('confirm') || lowerCommand.contains('yes') || lowerCommand.contains('create')) {
+      if (_payerController.text.isEmpty) {
+        await _accessibility.speak('Please provide a payer phone number or email first');
+        setState(() => _expectingPhoneInput = true);
+        return;
+      }
+      if (_amountController.text.isEmpty) {
+        await _accessibility.speak('Please provide an amount first');
+        setState(() => _expectingAmountInput = true);
+        return;
+      }
+      await _accessibility.speak('Creating money request');
+      await _requestMoney();
+      return;
+    }
+    
+    // Cancel
+    if (lowerCommand.contains('cancel') || lowerCommand.contains('back') || lowerCommand.contains('no')) {
+      await _accessibility.speak('Request cancelled');
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      return;
+    }
+    
+    // Help
+    await _accessibility.speak('You can say: phone number, amount, confirm, or cancel');
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Request Money'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.request_quote, size: 48),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Your Account Details',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      const SizedBox(height: 12),
-                      Text('Account: ${user?['account_number'] ?? 'N/A'}'),
-                      Text('Phone: ${user?['phone_number'] ?? 'N/A'}'),
-                    ],
+    return VoiceEnabledScreen(
+      screenName: 'Request Money',
+      onVoiceCommand: _handleVoiceCommand,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Request Money'),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Card(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.request_quote, size: 48),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Your Account Details',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Account: ${user?['account_number'] ?? 'N/A'}'),
+                        Text('Phone: ${user?['phone_number'] ?? 'N/A'}'),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
               
               TextFormField(
                 controller: _payerController,
@@ -247,11 +321,11 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
                           Text('How it works', style: TextStyle(fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      SizedBox(height: 8),
-                      Text('1. Enter payer\'s phone, email, or account number', style: TextStyle(fontSize: 12)),
-                      Text('2. Set the amount you want to request', style: TextStyle(fontSize: 12)),
-                      Text('3. They\'ll receive a notification with a payment link', style: TextStyle(fontSize: 12)),
-                      Text('4. Link expires in 7 days', style: TextStyle(fontSize: 12)),
+                      const SizedBox(height: 8),
+                      const Text('1. Enter payer\'s phone, email, or account number', style: TextStyle(fontSize: 12)),
+                      const Text('2. Set the amount you want to request', style: TextStyle(fontSize: 12)),
+                      const Text('3. They\'ll receive a notification with a payment link', style: TextStyle(fontSize: 12)),
+                      const Text('4. Link expires in 7 days', style: TextStyle(fontSize: 12)),
                     ],
                   ),
                 ),
@@ -260,6 +334,7 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
