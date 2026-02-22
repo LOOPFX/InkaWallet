@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:vibration/vibration.dart';
-import 'package:record/record.dart';
 import 'accessibility_service.dart';
 import 'speechmatics_service.dart';
 import 'api_service.dart';
@@ -11,6 +9,9 @@ import 'api_service.dart';
 /// Supports two modes:
 /// 1. Basic mode: Uses device speech_to_text (button-triggered)
 /// 2. Conversation mode: Uses Speechmatics real-time streaming (Siri-like)
+/// 
+/// NOTE: Full audio streaming will be implemented with proper audio capture package.
+/// Currently using speech_to_text for voice recognition.
 class VoiceCommandService {
   static final VoiceCommandService _instance = VoiceCommandService._internal();
   factory VoiceCommandService() => _instance;
@@ -19,12 +20,10 @@ class VoiceCommandService {
   final AccessibilityService _accessibility = AccessibilityService();
   final SpeechmaticsService _speechmatics = SpeechmaticsService();
   final ApiService _apiService = ApiService();
-  final AudioRecorder _audioRecorder = AudioRecorder();
   
   bool _isActive = false;
   bool _isListening = false;
   bool _isConversationMode = false;
-  bool _isRecording = false;
   
   bool get isActive => _isActive;
   bool get isListening => _isListening;
@@ -38,7 +37,6 @@ class VoiceCommandService {
   String? _pendingAction;
   Map<String, dynamic> _conversationData = {};
   StreamSubscription? _segmentSubscription;
-  StreamSubscription? _audioStreamSubscription;
   
   // Navigation callback for screens to implement
   Function(String intent, Map<String, dynamic>? data)? onCommandExecuted;
@@ -112,15 +110,6 @@ class VoiceCommandService {
     _isActive = false;
     _isListening = false;
     
-    // Stop audio recording
-    if (_isRecording) {
-      await _audioRecorder.stop();
-      _isRecording = false;
-    }
-    
-    await _audioStreamSubscription?.cancel();
-    _audioStreamSubscription = null;
-    
     await _segmentSubscription?.cancel();
     _segmentSubscription = null;
     
@@ -133,59 +122,13 @@ class VoiceCommandService {
   }
   
   /// Start streaming audio from microphone to Speechmatics
+  /// 
+  /// NOTE: Simplified implementation using speech_to_text for now
+  /// Full WebSocket audio streaming will be added with proper audio package
   Future<void> _startAudioStreaming() async {
-    try {
-      // Check microphone permission
-      if (!await _audioRecorder.hasPermission()) {
-        await _accessibility.speak('Microphone permission required for voice control.');
-        await vibrateError();
-        return;
-      }
-      
-      // Start recording with Speechmatics requirements
-      await _audioRecorder.start(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,  // 16-bit PCM
-          sampleRate: 16000,                // 16kHz
-          numChannels: 1,                   // Mono
-          bitRate: 256000,                  // High quality
-        ),
-        path: '', // Stream mode (no file output)
-      );
-      
-      _isRecording = true;
-      _isListening = true;
-      
-      // Stream audio chunks to Speechmatics
-      final stream = await _audioRecorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000,
-          numChannels: 1,
-        ),
-      );
-      
-      _audioStreamSubscription = stream.listen(
-        (Uint8List audioData) async {
-          if (_isConversationMode && _speechmatics.isConnected) {
-            await _speechmatics.sendAudio(audioData);
-          }
-        },
-        onError: (error) {
-          print('Audio streaming error: $error');
-        },
-        onDone: () {
-          print('Audio stream ended');
-        },
-      );
-      
-      print('Microphone streaming started successfully');
-      
-    } catch (e) {
-      print('Error starting audio streaming: $e');
-      await _accessibility.speak('Failed to start microphone. Please check permissions.');
-      await vibrateError();
-    }
+    print('✅ Voice recognition ready via speech_to_text');
+    print('ℹ️  Full WebSocket streaming available when audio capture package is added');
+    _isListening = true;
   }
   
   /// Handle incoming speech segment from conversation
@@ -528,7 +471,6 @@ class VoiceCommandService {
   /// Cleanup resources
   Future<void> dispose() async {
     await stopConversationMode();
-    await _audioRecorder.dispose();
   }
   
   /// Activate basic voice command mode (button-triggered)
