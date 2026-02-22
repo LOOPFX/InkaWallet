@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:vibration/vibration.dart';
 import 'accessibility_service.dart';
 import 'speechmatics_service.dart';

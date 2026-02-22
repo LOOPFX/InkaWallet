@@ -112,6 +112,15 @@ class AccessibilityService {
     return result;
   }
   
+  Future<void> stopListening() async {
+    await _stt.stop();
+    _isListening = false;
+  }
+  
+  Future<void> updateSettings({
+    required bool accessibilityEnabled,
+    required bool voiceEnabled,
+    required bool hapticsEnabled,
     bool? voiceControlEnabled,
   }) async {
     _accessibilityEnabled = accessibilityEnabled;
@@ -143,16 +152,7 @@ class AccessibilityService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('voice_control_enabled', false);
     await speak('Voice control disabled.');
-    await vibrate(
-  }) async {
-    _accessibilityEnabled = accessibilityEnabled;
-    _voiceEnabled = voiceEnabled;
-    _hapticsEnabled = hapticsEnabled;
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('accessibility_enabled', accessibilityEnabled);
-    await prefs.setBool('voice_enabled', voiceEnabled);
-    await prefs.setBool('haptics_enabled', hapticsEnabled);
+    await vibrate();
   }
   
   Future<void> announceAndVibrate(String message, {bool important = false}) async {

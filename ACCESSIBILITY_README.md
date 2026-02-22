@@ -1,11 +1,13 @@
 # InkaWallet - Fully Accessible Digital Wallet
 
 ## 🌟 Mission
+
 InkaWallet proves that digital financial services can be **secure, inclusive, and accessible to everyone** - including blind users and people with upper limb impairments.
 
 ## ✨ Key Accessibility Features
 
 ### 1. **Complete Voice Control** 🎤
+
 - Navigate the entire app using voice commands
 - Voice-activated login and registration
 - Send money, check balance, pay bills - all with voice
@@ -13,13 +15,15 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 - Natural language understanding (e.g., "Send 100 kwacha to 0888123456")
 
 ### 2. **Multi-Modal Biometric Authentication** 🔐
+
 - **Fingerprint** recognition
-- **Face** recognition  
+- **Face** recognition
 - **Iris** scan (device-dependent)
 - Touch-free secure authentication
 - Biometric confirmation for transactions
 
 ### 3. **Comprehensive Haptic Feedback** 📳
+
 - Different vibration patterns for different actions:
   - Short pulse: Button tap
   - Double pulse: Mode change
@@ -28,6 +32,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
   - Custom patterns for transactions
 
 ### 4. **Text-to-Speech Guidance** 🔊
+
 - Every UI element announced
 - Transaction confirmations spoken
 - Balance updates read aloud
@@ -35,6 +40,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 - Screen reader optimized
 
 ### 5. **Zero Visual Dependency** 👁️
+
 - Complete hands-free operation possible
 - Audio + Haptic feedback for all interactions
 - Voice input for all forms
@@ -43,12 +49,14 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ## 🎯 Supported Voice Commands
 
 ### Navigation
+
 - "Help" - List available commands
 - "Go back" - Navigate back
 - "Balance" - Check wallet balance
 - "Settings" - Open settings
 
 ### Transactions
+
 - "Send money" - Start money transfer
 - "Send [amount] to [number]" - Direct transfer
 - "Request money" - Request payment
@@ -56,6 +64,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 - "Cancel" - Cancel operation
 
 ### Services
+
 - "Buy airtime" - Purchase airtime
 - "Pay bills" - Pay utility bills
 - "Scan QR" - Activate QR scanner
@@ -64,6 +73,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 - "BNPL" - Buy now pay later
 
 ### Authentication
+
 - "Login" - Voice-guided login
 - "Register" - Voice-guided signup
 
@@ -72,6 +82,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ### New Services
 
 #### BiometricService
+
 ```dart
 /mobile/lib/services/biometric_service.dart
 - Multi-biometric support (fingerprint, face, iris)
@@ -80,6 +91,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ```
 
 #### SpeechmaticsService
+
 ```dart
 /mobile/lib/services/speechmatics_service.dart
 - Advanced voice transcription
@@ -89,6 +101,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ```
 
 #### VoiceCommandService
+
 ```dart
 /mobile/lib/services/voice_command_service.dart
 - Comprehensive voice command handling
@@ -98,6 +111,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ```
 
 #### Enhanced AccessibilityService
+
 ```dart
 /mobile/lib/services/accessibility_service.dart
 - Text-to-speech integration
@@ -109,6 +123,7 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ### UI Components
 
 #### VoiceEnabledScreen Widget
+
 ```dart
 /mobile/lib/widgets/voice_enabled_screen.dart
 - Wraps any screen with voice capabilities
@@ -120,14 +135,16 @@ InkaWallet proves that digital financial services can be **secure, inclusive, an
 ## 🔧 Setup & Configuration
 
 ### 1. Install Dependencies
+
 Already configured in `pubspec.yaml`:
+
 ```yaml
 dependencies:
-  local_auth: ^2.2.0  # Biometric authentication
-  flutter_tts: ^4.0.2  # Text-to-speech
-  speech_to_text: ^7.0.0  # Speech recognition
-  vibration: ^2.0.0  # Haptic feedback
-  http: ^1.1.2  # For Speechmatics API
+  local_auth: ^2.2.0 # Biometric authentication
+  flutter_tts: ^4.0.2 # Text-to-speech
+  speech_to_text: ^7.0.0 # Speech recognition
+  vibration: ^2.0.0 # Haptic feedback
+  http: ^1.1.2 # For Speechmatics API
 ```
 
 ### 2. Speechmatics API Setup
@@ -146,6 +163,7 @@ For testing, the app works with local speech recognition (no API key needed).
 ### 3. Enable Accessibility Features
 
 In the app settings:
+
 1. Enable "Accessibility"
 2. Enable "Voice Guidance"
 3. Enable "Voice Control" (for full voice navigation)
@@ -155,6 +173,7 @@ In the app settings:
 ## 📱 Usage Examples
 
 ### Example 1: Voice Login
+
 ```
 User: "Login"
 App: 🔊 "Please say your email address"
@@ -165,6 +184,7 @@ App: 📳 *vibrates* 🔊 "Login successful. Welcome!"
 ```
 
 ### Example 2: Voice Money Transfer
+
 ```
 User: 🎤 *presses floating mic*
 App: 📳 *short vibration* 🔊 "Listening..."
@@ -175,6 +195,7 @@ App: 🔐 *biometric scan* 📳 *confirmation vibration* 🔊 "Transaction succe
 ```
 
 ### Example 3: Biometric Login
+
 ```
 User: 👆 *taps biometric login card*
 App: 🔊 "Authenticating with biometrics"
@@ -185,6 +206,7 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 ## 🔒 Security Features
 
 ### Layered Security
+
 1. **Voice Confidence Thresholds** - Commands must meet confidence score
 2. **Verbal Confirmation** - Required for sensitive operations
 3. **Biometric Authentication** - For transactions above threshold
@@ -192,6 +214,7 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 5. **Audit Trail** - All voice commands logged
 
 ### Privacy
+
 - No biometric data stored in app
 - Voice processing can use local recognition
 - Speechmatics API is optional (for enhanced accuracy)
@@ -202,12 +225,14 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 ### ✅ Completed Features
 
 **Backend:**
+
 - Credit scoring system
 - Buy Now Pay Later (BNPL)
 - Transaction APIs
 - User authentication
 
 **Frontend:**
+
 - QR code scanning from gallery
 - Save QR to device gallery
 - Credit score visualization
@@ -220,6 +245,7 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 - Speechmatics integration
 
 **Accessibility:**
+
 - BiometricService (fingerprint, face, iris)
 - SpeechmaticsService (advanced voice recognition)
 - VoiceCommandService (complete voice navigation)
@@ -232,6 +258,7 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 ## 🧪 Testing Accessibility
 
 ### Voice Command Testing
+
 ```bash
 1. Open app
 2. Enable "Voice Control" in Settings
@@ -242,6 +269,7 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 ```
 
 ### Biometric Testing
+
 ```bash
 1. Go to Settings → Security
 2. Enable "Biometric Authentication"
@@ -251,6 +279,7 @@ App: 📳 *triple vibration* 🔊 "Login successful. Welcome!"
 ```
 
 ### Haptic Testing
+
 ```bash
 1. Enable "Haptic Feedback" in Settings
 2. Navigate through different screens
@@ -282,6 +311,7 @@ Say: "admin one two three"
 ## 🚀 Getting Started
 
 ### Backend
+
 ```bash
 cd backend
 npm install
@@ -289,6 +319,7 @@ npm run dev  # Runs on port 3000
 ```
 
 ### Mobile App
+
 ```bash
 cd mobile
 flutter pub get
@@ -296,6 +327,7 @@ flutter run
 ```
 
 ### Test Voice Features
+
 ```bash
 1. Enable accessibility in Settings
 2. Say "Help" to hear commands
@@ -307,28 +339,31 @@ flutter run
 ## 🌈 Inclusion Features Summary
 
 ### For Blind Users
+
 ✅ Complete voice navigation  
 ✅ All UI elements announced  
 ✅ Haptic feedback for all actions  
 ✅ Voice input for all forms  
 ✅ Audio transaction confirmations  
-✅ Screen reader optimized  
+✅ Screen reader optimized
 
 ### For Upper Limb Impaired Users
+
 ✅ Voice-only operation  
 ✅ Biometric authentication (no typing)  
 ✅ Voice commands for everything  
 ✅ No fine motor skills required  
 ✅ Hands-free money transfers  
-✅ Voice-activated services  
+✅ Voice-activated services
 
 ### For All Users
+
 ✅ Multi-modal feedback (audio + haptic + visual)  
 ✅ Flexible authentication (password, biometric, voice)  
 ✅ Dark mode for low vision  
 ✅ Large touch targets  
 ✅ Clear error messages  
-✅ Undo/cancel options  
+✅ Undo/cancel options
 
 ## 📈 Future Enhancements
 
@@ -368,6 +403,6 @@ MIT License - See LICENSE file
 
 ---
 
-**InkaWallet** - *Proving that digital wallets can be accessible to everyone, without compromising security.*
+**InkaWallet** - _Proving that digital wallets can be accessible to everyone, without compromising security._
 
 🌍 **Digital Inclusion** | 🔒 **Bank-Level Security** | ♿ **Full Accessibility**

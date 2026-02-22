@@ -1,13 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-enum BiometricType {
-  fingerprint,
-  face,
-  iris,
-  none,
-}
 
 class BiometricService {
   static final BiometricService _instance = BiometricService._internal();
@@ -40,37 +34,14 @@ class BiometricService {
       final isDeviceSupported = await _auth.isDeviceSupported();
       
       if (canCheckBiometrics && isDeviceSupported) {
-        final availableBiometrics = await _auth.getAvailableBiometrics();
-        _availableTypes = _mapBiometricTypes(availableBiometrics);
-        return true;
+        _availableTypes = await _auth.getAvailableBiometrics();
+        return _availableTypes.isNotEmpty;
       }
       return false;
     } catch (e) {
-      print('Biometric check error: $e');
+      debugPrint('Biometric check error: $e');
       return false;
     }
-  }
-  
-  List<BiometricType> _mapBiometricTypes(List<BiometricType> types) {
-    final mapped = <BiometricType>[];
-    
-    for (var type in types) {
-      switch (type) {
-        case BiometricType.fingerprint:
-          mapped.add(BiometricType.fingerprint);
-          break;
-        case BiometricType.face:
-          mapped.add(BiometricType.face);
-          break;
-        case BiometricType.iris:
-          mapped.add(BiometricType.iris);
-          break;
-        default:
-          break;
-      }
-    }
-    
-    return mapped.isEmpty ? [BiometricType.none] : mapped;
   }
   
   /// Authenticate user with biometrics
@@ -91,16 +62,16 @@ class BiometricService {
       
       final authenticated = await _auth.authenticate(
         localizedReason: reason,
-        options: AuthenticationOptions(
-          useErrorDialogs: useErrorDialogs,
-          stickyAuth: stickyAuth,
+        options: const AuthenticationOptions(
+          useErrorDialogs: true,
+          stickyAuth: true,
           biometricOnly: true,
         ),
       );
       
       return authenticated;
     } on PlatformException catch (e) {
-      print('Biometric authentication error: ${e.message}');
+      debugPrint('Biometric authentication error: ${e.message}');
       return false;
     }
   }
@@ -164,14 +135,16 @@ class BiometricService {
         return 'Face Recognition';
       case BiometricType.iris:
         return 'Iris Scan';
-      case BiometricType.none:
-        return 'None Available';
+      case BiometricType.strong:
+        return 'Strong Biometric';
+      case BiometricType.weak:
+        return 'Weak Biometric';
     }
   }
   
   /// Get available biometrics as formatted string
   String getAvailableBiometricsString() {
-    if (_availableTypes.isEmpty || _availableTypes.contains(BiometricType.none)) {
+    if (_availableTypes.isEmpty) {
       return 'No biometric authentication available';
     }
     
