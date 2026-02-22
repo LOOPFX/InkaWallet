@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:provider/provider.dart';
-import '../providers/wallet_provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/voice_command_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class ReceiveMoneyScreen extends StatefulWidget {
   const ReceiveMoneyScreen({super.key});
@@ -12,71 +17,254 @@ class ReceiveMoneyScreen extends StatefulWidget {
 
 class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _payerController = TextEditingController();
   final _amountController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _accessibility = AccessibilityService();
-  String _paymentMethod = 'mpamba';
+  final _voiceService = VoiceCommandService();
+  final _api = ApiService();
+  bool _isLoading = false;
+  bool _expectingPhoneInput = false;
+  bool _expectingAmountInput = false;
   
   @override
   void initState() {
     super.initState();
-    _accessibility.speak('Receive money screen. Simulate incoming payment');
+    _accessibility.speak('Request money screen');
   }
 
   @override
   void dispose() {
+    _payerController.dispose();
     _amountController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _receiveMoney() async {
+  Future<void> _pickContact() async {
+    try {
+      if (await FlutterContacts.requestPermission()) {
+        final contact = await FlutterContacts.openExternalPick();
+        if (contact != null) {
+          final fullContact = await FlutterContacts.getContact(contact.id);
+          if (fullContact != null && fullContact.phones.isNotEmpty) {
+            final phone = fullContact.phones.first.number.replaceAll(RegExp(r'[^\d+]'), '');
+            setState(() {
+              _payerController.text = phone;
+            });
+            await _accessibility.speak('Contact selected: ${fullContact.displayName}');
+          } else if (fullContact != null && fullContact.emails.isNotEmpty) {
+            setState(() {
+              _payerController.text = fullContact.emails.first.address;
+            });
+            await _accessibility.speak('Contact selected: ${fullContact.displayName}');
+          }
+        }
+      }
+    } catch (e) {
+      await _accessibility.speak('Error accessing contacts');
+    }
+  }
+
+  Future<void> _requestMoney() async {
     if (_formKey.currentState!.validate()) {
-      final wallet = Provider.of<WalletProvider>(context, listen: false);
-      final success = await wallet.receiveMoney(
-        amount: double.parse(_amountController.text),
-        paymentMethod: _paymentMethod,
-        description: 'Incoming transfer from $_paymentMethod',
-      );
+      setState(() => _isLoading = true);
       
-      if (success && mounted) {
-        Navigator.pop(context);
+      try {
+        final response = await _api.createMoneyRequest(
+          payerIdentifier: _payerController.text.trim(),
+          amount: double.parse(_amountController.text),
+          description: _descriptionController.text.trim(),
+        );
+        
+        await _accessibility.announceAndVibrate(
+          'Money request sent successfully!',
+          important: true,
+        );
+
+        if (mounted) {
+          // Show payment link dialog
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Request Sent'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Request ID: ${response['request_id']}'),
+                  const SizedBox(height: 8),
+                  Text('Amount: MKW ${double.parse(_amountController.text).toStringAsFixed(2)}'),
+                  const SizedBox(height: 16),
+                  const Text('Payment Link:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    color: Colors.grey[200],
+                    child: SelectableText(
+                      response['payment_link'],
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: response['payment_link']));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Link copied to clipboard')),
+                      );
+                    },
+                    icon: const Icon(Icons.copy),
+                    label: const Text('Copy Link'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Done'),
+                ),
+              ],
+            ),
+          );
+        }
+      } catch (e) {
+        await _accessibility.speak('Request failed: ${e.toString()}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          );
+        }
+      } finally {
+        setState(() => _isLoading = false);
       }
     }
   }
 
+  Future<void> _handleVoiceCommand(Map<String, dynamic> command) async {
+    final commandText = command['command'] as String? ?? '';
+    final lowerCommand = commandText.toLowerCase();
+    
+    // Extract phone/email
+    if (_expectingPhoneInput || lowerCommand.contains('phone') || lowerCommand.contains('email')) {
+      final phoneMatch = RegExp(r'\d{10,15}').firstMatch(commandText);
+      if (phoneMatch != null) {
+        setState(() {
+          _payerController.text = phoneMatch.group(0)!;
+          _expectingPhoneInput = false;
+        });
+        await _accessibility.speak('Payer phone set. What amount would you like to request?');
+        setState(() => _expectingAmountInput = true);
+        return;
+      }
+      await _accessibility.speak('I could not detect a phone number. Please try again');
+      return;
+    }
+    
+    // Extract amount
+    if (_expectingAmountInput || lowerCommand.contains('amount') || lowerCommand.contains('request')) {
+      final amountMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(commandText);
+      if (amountMatch != null) {
+        final amount = amountMatch.group(1)!;
+        setState(() {
+          _amountController.text = amount;
+          _expectingAmountInput = false;
+        });
+        await _accessibility.speak('Amount set to $amount kwacha. Say confirm to create request or cancel to abort');
+        return;
+      }
+      await _accessibility.speak('I could not detect an amount. Please say the amount again');
+      return;
+    }
+    
+    // Confirm request
+    if (lowerCommand.contains('confirm') || lowerCommand.contains('yes') || lowerCommand.contains('create')) {
+      if (_payerController.text.isEmpty) {
+        await _accessibility.speak('Please provide a payer phone number or email first');
+        setState(() => _expectingPhoneInput = true);
+        return;
+      }
+      if (_amountController.text.isEmpty) {
+        await _accessibility.speak('Please provide an amount first');
+        setState(() => _expectingAmountInput = true);
+        return;
+      }
+      await _accessibility.speak('Creating money request');
+      await _requestMoney();
+      return;
+    }
+    
+    // Cancel
+    if (lowerCommand.contains('cancel') || lowerCommand.contains('back') || lowerCommand.contains('no')) {
+      await _accessibility.speak('Request cancelled');
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      return;
+    }
+    
+    // Help
+    await _accessibility.speak('You can say: phone number, amount, confirm, or cancel');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Receive Money'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(Icons.info_outline, size: 48, color: Colors.blue),
-                      SizedBox(height: 16),
-                      Text(
-                        'Simulate Incoming Payment',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'This is a mock feature to demonstrate receiving money from external payment providers.',
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+    final user = Provider.of<AuthProvider>(context).user;
+    
+    return VoiceEnabledScreen(
+      screenName: 'Request Money',
+      onVoiceCommand: _handleVoiceCommand,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Request Money'),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Card(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.request_quote, size: 48),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Your Account Details',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        const SizedBox(height: 12),
+                        Text('Account: ${user?['account_number'] ?? 'N/A'}'),
+                        Text('Phone: ${user?['phone_number'] ?? 'N/A'}'),
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(height: 24),
+              
+              TextFormField(
+                controller: _payerController,
+                decoration: InputDecoration(
+                  labelText: 'From (Phone/Email/Account)',
+                  prefixIcon: const Icon(Icons.person),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.contacts),
+                    onPressed: _pickContact,
+                  ),
+                  hintText: '+265888123456 or email',
+                ),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter payer phone/email'
+                    : null,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               
               TextFormField(
                 controller: _amountController,
@@ -94,36 +282,59 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
                   }
                   return null;
                 },
-                onTap: () => _accessibility.speak('Amount field'),
               ),
               const SizedBox(height: 16),
               
-              DropdownButtonFormField<String>(
-                value: _paymentMethod,
+              TextFormField(
+                controller: _descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'From Payment Method',
-                  prefixIcon: Icon(Icons.account_balance),
+                  labelText: 'Description (Optional)',
+                  prefixIcon: Icon(Icons.note),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'mpamba', child: Text('TNM Mpamba')),
-                  DropdownMenuItem(value: 'airtel_money', child: Text('Airtel Money')),
-                  DropdownMenuItem(value: 'bank', child: Text('Bank Transfer')),
-                ],
-                onChanged: (value) {
-                  setState(() => _paymentMethod = value!);
-                  _accessibility.speak('From: $value');
-                },
+                maxLines: 2,
               ),
               const SizedBox(height: 24),
               
               ElevatedButton(
-                onPressed: _receiveMoney,
-                child: const Text('Simulate Receive'),
+                onPressed: _isLoading ? null : _requestMoney,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Send Request', style: TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(height: 16),
+              
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 20, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('How it works', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('1. Enter payer\'s phone, email, or account number', style: TextStyle(fontSize: 12)),
+                      const Text('2. Set the amount you want to request', style: TextStyle(fontSize: 12)),
+                      const Text('3. They\'ll receive a notification with a payment link', style: TextStyle(fontSize: 12)),
+                      const Text('4. Link expires in 7 days', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
       ),
+    ),
     );
   }
 }

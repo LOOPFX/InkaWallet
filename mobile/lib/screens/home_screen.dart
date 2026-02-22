@@ -3,10 +3,19 @@ import 'package:provider/provider.dart';
 import '../providers/wallet_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/accessibility_service.dart';
+import '../services/voice_command_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'send_money_screen.dart';
 import 'receive_money_screen.dart';
 import 'transactions_screen.dart';
-import 'settings_screen.dart';
+import 'settings_screen.dart' as settings;
+import 'airtime_screen.dart';
+import 'bills_screen.dart';
+import 'topup_screen.dart';
+import 'my_qr_screen.dart';
+import 'scan_pay_screen.dart';
+import 'credit_score_screen.dart';
+import 'bnpl_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +26,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _accessibility = AccessibilityService();
+  final _voiceService = VoiceCommandService();
   
   @override
   void initState() {
@@ -31,74 +41,261 @@ class _HomeScreenState extends State<HomeScreen> {
     _accessibility.speak('Home screen. Your balance is ${wallet.formattedBalance}');
   }
 
+  Future<void> _handleVoiceCommand(Map<String, dynamic> command) async {
+    final commandText = command['command'] as String? ?? '';
+    final lowerCommand = commandText.toLowerCase();
+    
+    // Check balance
+    if (lowerCommand.contains('balance') || lowerCommand.contains('how much')) {
+      final wallet = Provider.of<WalletProvider>(context, listen: false);
+      await _accessibility.speak('Your current balance is ${wallet.formattedBalance}');
+      return;
+    }
+    
+    // Send money
+    if (lowerCommand.contains('send') || lowerCommand.contains('transfer')) {
+      await _accessibility.speak('Opening send money screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SendMoneyScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Request money
+    if (lowerCommand.contains('request') || lowerCommand.contains('receive')) {
+      await _accessibility.speak('Opening receive money screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ReceiveMoneyScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Buy airtime
+    if (lowerCommand.contains('airtime') || lowerCommand.contains('recharge')) {
+      await _accessibility.speak('Opening airtime screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AirtimeScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Pay bills
+    if (lowerCommand.contains('bill') || lowerCommand.contains('pay bill')) {
+      await _accessibility.speak('Opening bills payment screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BillsScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Top up wallet
+    if (lowerCommand.contains('top up') || lowerCommand.contains('topup') || lowerCommand.contains('add money')) {
+      await _accessibility.speak('Opening wallet top-up screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TopUpScreen()),
+        );
+      }
+      return;
+    }
+    
+    // QR code
+    if (lowerCommand.contains('my qr') || lowerCommand.contains('show qr')) {
+      await _accessibility.speak('Opening your Q R code');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyQRScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Scan QR
+    if (lowerCommand.contains('scan') || lowerCommand.contains('scan qr')) {
+      await _accessibility.speak('Opening Q R scanner');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ScanPayScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Credit score
+    if (lowerCommand.contains('credit') || lowerCommand.contains('score')) {
+      await _accessibility.speak('Opening credit score screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreditScoreScreen()),
+        );
+      }
+      return;
+    }
+    
+    // BNPL
+    if (lowerCommand.contains('bnpl') || lowerCommand.contains('buy now pay later') || lowerCommand.contains('loan')) {
+      await _accessibility.speak('Opening buy now pay later screen');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BNPLScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Transactions
+    if (lowerCommand.contains('transaction') || lowerCommand.contains('history')) {
+      await _accessibility.speak('Opening transaction history');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const TransactionsScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Settings
+    if (lowerCommand.contains('setting')) {
+      await _accessibility.speak('Opening settings');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const settings.SettingsScreen()),
+        );
+      }
+      return;
+    }
+    
+    // Default help
+    await _accessibility.speak('Sorry, I did not understand. You can say: check balance, send money, buy airtime, pay bills, scan Q R, or open settings');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('InkaWallet'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Balance Card
-              Consumer<WalletProvider>(
-                builder: (context, wallet, _) {
-                  return Card(
-                    color: Theme.of(context).colorScheme.primary,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Total Balance',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            wallet.formattedBalance,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (wallet.isLocked)
-                            const Padding(
-                              padding: EdgeInsets.only(top: 8),
-                              child: Chip(
-                                label: Text('Wallet Locked'),
-                                backgroundColor: Colors.red,
+    return VoiceEnabledScreen(
+      screenName: 'Home',
+      onVoiceCommand: _handleVoiceCommand,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('InkaWallet'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const settings.SettingsScreen()),
+                );
+              },
+              tooltip: 'Settings',
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Balance Card
+                Consumer<WalletProvider>(
+                  builder: (context, wallet, _) {
+                    return Card(
+                      color: Theme.of(context).colorScheme.primary,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'Total Balance',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
                               ),
                             ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              wallet.formattedBalance,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Consumer<AuthProvider>(
+                              builder: (context, auth, _) {
+                                final accountNumber = auth.user?['account_number'] ?? 'N/A';
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.account_balance_wallet, color: Colors.white70, size: 16),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        accountNumber,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: 1.2,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          // Copy to clipboard
+                                          _accessibility.speak('Account number copied');
+                                        },
+                                        child: const Icon(Icons.copy, color: Colors.white70, size: 16),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            if (wallet.isLocked)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Chip(
+                                  label: Text('Wallet Locked'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
               const SizedBox(height: 24),
               
-              // Action Buttons
+              // Primary Action Buttons
               Row(
                 children: [
                   Expanded(
@@ -117,16 +314,131 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _ActionButton(
-                      icon: Icons.call_received,
-                      label: 'Receive',
+                      icon: Icons.request_quote,
+                      label: 'Request',
                       onPressed: () {
-                        _accessibility.speak('Receive money');
+                        _accessibility.speak('Request money');
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const ReceiveMoneyScreen()),
                         );
                       },
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // QR Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.qr_code,
+                      label: 'My QR',
+                      onPressed: () {
+                        _accessibility.speak('My QR code');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const MyQRScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.qr_code_scanner,
+                      label: 'Scan & Pay',
+                      onPressed: () {
+                        _accessibility.speak('Scan QR to pay');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ScanPayScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Services Section
+              Text(
+                'Services',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: [
+                  _ServiceButton(
+                    icon: Icons.phone_android,
+                    label: 'Airtime',
+                    color: Colors.orange,
+                    onPressed: () async {
+                      _accessibility.speak('Buy airtime');
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AirtimeScreen()),
+                      );
+                      if (result == true) _loadData();
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.receipt_long,
+                    label: 'Pay Bills',
+                    color: Colors.blue,
+                    onPressed: () async {
+                      _accessibility.speak('Pay bills');
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BillsScreen()),
+                      );
+                      if (result == true) _loadData();
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.add_circle,
+                    label: 'Top Up',
+                    color: Colors.green,
+                    onPressed: () async {
+                      _accessibility.speak('Top up wallet');
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TopUpScreen()),
+                      );
+                      if (result == true) _loadData();
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.credit_score,
+                    label: 'Credit Score',
+                    color: const Color(0xFF7C3AED),
+                    onPressed: () {
+                      _accessibility.speak('Credit score');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreditScoreScreen()),
+                      );
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.shopping_cart,
+                    label: 'BNPL',
+                    color: Colors.pink,
+                    onPressed: () {
+                      _accessibility.speak('Buy Now Pay Later');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BNPLScreen()),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -178,6 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -238,6 +551,46 @@ class _TransactionTile extends StatelessWidget {
           style: TextStyle(
             color: isSent ? Colors.red : Colors.green,
             fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ServiceButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ServiceButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 32, color: color),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
           ),
         ),
       ),

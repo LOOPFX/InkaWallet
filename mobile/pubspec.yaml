@@ -20,6 +20,7 @@ dependencies:
   # HTTP & API
   http: ^1.1.2
   dio: ^5.4.0
+  web_socket_channel: ^3.0.1
 
   # Local Storage
   shared_preferences: ^2.2.2
@@ -42,6 +43,16 @@ dependencies:
   # QR Code
   qr_flutter: ^4.1.0
   mobile_scanner: ^3.5.5
+  google_mlkit_barcode_scanning: ^0.11.0
+
+  # Contacts
+  flutter_contacts: ^1.1.7+1
+
+  # Image Processing
+  image_picker: ^1.0.7
+  path_provider: ^2.1.2
+  permission_handler: ^11.2.0
+  gal: ^2.3.0
 
 dev_dependencies:
   flutter_test:
