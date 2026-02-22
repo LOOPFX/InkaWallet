@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:vibration/vibration.dart';
+import 'package:record/record.dart';
 import 'accessibility_service.dart';
 import 'speechmatics_service.dart';
+import 'api_service.dart';
 
 /// Comprehensive voice command service for hands-free conversation
 /// 
@@ -15,10 +18,13 @@ class VoiceCommandService {
 
   final AccessibilityService _accessibility = AccessibilityService();
   final SpeechmaticsService _speechmatics = SpeechmaticsService();
+  final ApiService _apiService = ApiService();
+  final AudioRecorder _audioRecorder = AudioRecorder();
   
   bool _isActive = false;
   bool _isListening = false;
   bool _isConversationMode = false;
+  bool _isRecording = false;
   
   bool get isActive => _isActive;
   bool get isListening => _isListening;
@@ -32,6 +38,10 @@ class VoiceCommandService {
   String? _pendingAction;
   Map<String, dynamic> _conversationData = {};
   StreamSubscription? _segmentSubscription;
+  StreamSubscription? _audioStreamSubscription;
+  
+  // Navigation callback for screens to implement
+  Function(String intent, Map<String, dynamic>? data)? onCommandExecuted;
   
   /// Initialize voice command service
   Future<void> initialize() async {
@@ -102,6 +112,15 @@ class VoiceCommandService {
     _isActive = false;
     _isListening = false;
     
+    // Stop audio recording
+    if (_isRecording) {
+      await _audioRecorder.stop();
+      _isRecording = false;
+    }
+    
+    await _audioStreamSubscription?.cancel();
+    _audioStreamSubscription = null;
+    
     await _segmentSubscription?.cancel();
     _segmentSubscription = null;
     
@@ -114,16 +133,59 @@ class VoiceCommandService {
   }
   
   /// Start streaming audio from microphone to Speechmatics
-  /// NOTE: This is a placeholder - actual implementation needs to capture
-  /// microphone audio and stream it via _speechmatics.sendAudio()
   Future<void> _startAudioStreaming() async {
-    // TODO: Integrate with audio recording plugin
-    // 1. Start microphone recording (16-bit PCM, 16kHz, mono)
-    // 2. Capture audio chunks (160-320 samples = 10-20ms)
-    // 3. Send to Speechmatics: await _speechmatics.sendAudio(audioBytes);
-    // 4. Continue until conversation mode stopped
-    
-    print('Audio streaming not yet implemented - needs microphone capture integration');
+    try {
+      // Check microphone permission
+      if (!await _audioRecorder.hasPermission()) {
+        await _accessibility.speak('Microphone permission required for voice control.');
+        await vibrateError();
+        return;
+      }
+      
+      // Start recording with Speechmatics requirements
+      await _audioRecorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,  // 16-bit PCM
+          sampleRate: 16000,                // 16kHz
+          numChannels: 1,                   // Mono
+          bitRate: 256000,                  // High quality
+        ),
+        path: '', // Stream mode (no file output)
+      );
+      
+      _isRecording = true;
+      _isListening = true;
+      
+      // Stream audio chunks to Speechmatics
+      final stream = await _audioRecorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+      );
+      
+      _audioStreamSubscription = stream.listen(
+        (Uint8List audioData) async {
+          if (_isConversationMode && _speechmatics.isConnected) {
+            await _speechmatics.sendAudio(audioData);
+          }
+        },
+        onError: (error) {
+          print('Audio streaming error: $error');
+        },
+        onDone: () {
+          print('Audio stream ended');
+        },
+      );
+      
+      print('Microphone streaming started successfully');
+      
+    } catch (e) {
+      print('Error starting audio streaming: $e');
+      await _accessibility.speak('Failed to start microphone. Please check permissions.');
+      await vibrateError();
+    }
   }
   
   /// Handle incoming speech segment from conversation
@@ -257,40 +319,91 @@ class VoiceCommandService {
   Future<void> _executePendingAction() async {
     if (_pendingAction == null) return;
     
-    switch (_pendingAction) {
-      case 'send_money_confirm':
-        // TODO: Actually execute the transaction via API
-        await _accessibility.speak(
-          'Transaction confirmed. Sending ${_conversationData['amount']} kwacha to ${_conversationData['recipient']}.'
-        );
-        await vibrateSuccess();
-        // Here you would call: await TransactionService().sendMoney(...)
-        break;
-        
-      case 'request_money_confirm':
-        await _accessibility.speak(
-          'Money request sent to ${_conversationData['payer']} for ${_conversationData['amount']} kwacha.'
-        );
-        await vibrateSuccess();
-        break;
-        
-      case 'buy_airtime_confirm':
-        await _accessibility.speak(
-          'Purchasing ${_conversationData['amount']} kwacha airtime for ${_conversationData['phone']}.'
-        );
-        await vibrateSuccess();
-        break;
-        
-      case 'pay_bill_confirm':
-        await _accessibility.speak(
-          'Paying ${_conversationData['amount']} kwacha to ${_conversationData['biller']}.'
-        );
-        await vibrateSuccess();
-        break;
+    try {
+      switch (_pendingAction) {
+        case 'send_money_confirm':
+          await _accessibility.speak('Processing transaction...');
+          await vibrateAction();
+          
+          final result = await _apiService.sendMoney(
+            receiverPhone: _conversationData['recipient'],
+            amount: _conversationData['amount'],
+            description: 'Voice payment',
+          );
+          
+          await _accessibility.speak(
+            'Success! ${_conversationData['amount']} kwacha sent to ${_conversationData['recipient']}.'
+          );
+          await vibrateSuccess();
+          break;
+          
+        case 'request_money_confirm':
+          await _accessibility.speak('Sending money request...');
+          await vibrateAction();
+          
+          final result = await _apiService.createMoneyRequest(
+            payerIdentifier: _conversationData['payer'],
+            amount: _conversationData['amount'],
+            description: 'Voice request',
+          );
+          
+          await _accessibility.speak(
+            'Money request sent to ${_conversationData['payer']} for ${_conversationData['amount']} kwacha.'
+          );
+          await vibrateSuccess();
+          break;
+          
+        case 'buy_airtime_confirm':
+          await _accessibility.speak('Purchasing airtime...');
+          await vibrateAction();
+          
+          // Extract provider from phone number or use default
+          String provider = 'Airtel'; // Default - could be smart-detected
+          if (_conversationData['phone'].toString().startsWith('088')) {
+            provider = 'Airtel';
+          } else if (_conversationData['phone'].toString().startsWith('099')) {
+            provider = 'TNM';
+          }
+          
+          final result = await _apiService.buyAirtime(
+            phoneNumber: _conversationData['phone'],
+            provider: provider,
+            amount: _conversationData['amount'],
+            password: '', // Voice transactions might skip password or use PIN
+          );
+          
+          await _accessibility.speak(
+            'Success! ${_conversationData['amount']} kwacha airtime sent to ${_conversationData['phone']}.'
+          );
+          await vibrateSuccess();
+          break;
+          
+        case 'pay_bill_confirm':
+          await _accessibility.speak('Processing bill payment...');
+          await vibrateAction();
+          
+          final result = await _apiService.payBill(
+            billType: _conversationData['billType'] ?? 'utility',
+            provider: _conversationData['biller'] ?? 'ESCOM',
+            accountNumber: _conversationData['accountNumber'] ?? '',
+            amount: _conversationData['amount'],
+            password: '',
+          );
+          
+          await _accessibility.speak(
+            'Bill paid successfully. ${_conversationData['amount']} kwacha to ${_conversationData['biller']}.'
+          );
+          await vibrateSuccess();
+          break;
+      }
+    } catch (e) {
+      print('Error executing action: $e');
+      await _accessibility.speak('Transaction failed. ${e.toString()}');
+      await vibrateError();
+    } finally {
+      _pendingAction = null;
+      _conversationData.clear();
     }
-    
-    _pendingAction = null;
-    _conversationData.clear();
   }
   
   /// Handle request money conversation
@@ -375,28 +488,47 @@ class VoiceCommandService {
   
   /// Handle check balance
   Future<void> _handleCheckBalance() async {
-    // TODO: Fetch actual balance from API
-    await _accessibility.speak('Your current balance is 25,000 kwacha.');
-    await vibrateSuccess();
+    try {
+      await _accessibility.speak('Checking your balance...');
+      await vibrateShort();
+      
+      final result = await _apiService.getBalance();
+      final balance = result['balance'] ?? 0.0;
+      
+      await _accessibility.speak('Your current balance is ${balance.toStringAsFixed(2)} kwacha.');
+      await vibrateSuccess();
+    } catch (e) {
+      print('Error fetching balance: $e');
+      await _accessibility.speak('Failed to check balance. Please try again.');
+      await vibrateError();
+    }
   }
   
   /// Handle scan QR
   Future<void> _handleScanQR() async {
     await _accessibility.speak('Opening QR scanner.');
     await vibrateNavigation();
-    // Screen will handle navigation
+    onCommandExecuted?.call('scan_qr', null);
   }
   
   /// Handle check credit score
   Future<void> _handleCheckCredit() async {
     await _accessibility.speak('Opening credit score.');
     await vibrateNavigation();
+    onCommandExecuted?.call('check_credit', null);
   }
   
   /// Handle BNPL
   Future<void> _handleBNPL() async {
     await _accessibility.speak('Opening buy now pay later options.');
     await vibrateNavigation();
+    onCommandExecuted?.call('bnpl', null);
+  }
+  
+  /// Cleanup resources
+  Future<void> dispose() async {
+    await stopConversationMode();
+    await _audioRecorder.dispose();
   }
   
   /// Activate basic voice command mode (button-triggered)

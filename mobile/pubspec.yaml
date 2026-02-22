@@ -34,6 +34,7 @@ dependencies:
   flutter_tts: ^4.0.2
   speech_to_text: ^7.0.0
   vibration: ^2.0.0
+  record: ^5.1.2
 
   # UI Components
   flutter_svg: ^2.0.9

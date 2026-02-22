@@ -3,6 +3,7 @@
 ## ✅ COMPLETED - February 22, 2026
 
 ### Overview
+
 Completely rewrote `speechmatics_service.dart` to implement proper **real-time conversational voice AI** using Speechmatics WebSocket streaming API, based on official Voice SDK documentation.
 
 ---
@@ -10,6 +11,7 @@ Completely rewrote `speechmatics_service.dart` to implement proper **real-time c
 ## Architecture
 
 ### WebSocket Real-time Streaming ✅
+
 - **Endpoint**: `wss://eu2.rt.speechmatics.com/v2`
 - **Protocol**: WebSocket binary audio streaming
 - **Authentication**: JWT token via API key
@@ -18,35 +20,40 @@ Completely rewrote `speechmatics_service.dart` to implement proper **real-time c
 ### Conversational AI Features ✅
 
 #### 1. Automatic Turn Detection
+
 - Detects when user finishes speaking (800ms silence delay)
 - No manual "stop listening" button needed
 - Siri-like natural conversation flow
 
 #### 2. Intelligent Segmentation
+
 - Groups words into meaningful speech segments
 - Separates speaker turns automatically
 - Provides clean, structured segments vs raw word stream
 
 #### 3. Low-latency Transcription
+
 - **Max delay**: 0.7 seconds (configurable)
 - **Partial results**: Word-by-word updates as user speaks
 - **Final results**: Complete segments after turn ends
 
 #### 4. Speaker Diarization
+
 - Identifies different speakers (USER, S1, S2, etc.)
 - Useful for multi-speaker scenarios
 - Enables speaker-focused transcription
 
 #### 5. Preset Configurations
+
 Based on Speechmatics Voice SDK presets:
 
-| Preset | Use Case | Best For |
-|--------|----------|----------|
-| `adaptive` ✅ | General conversation | InkaWallet (default) |
-| `fast` | Low latency responses | Quick commands |
-| `smart_turn` | Complex conversation | ML-based turn detection |
-| `scribe` | Note-taking | Dictation |
-| `captions` | Live captioning | Accessibility |
+| Preset        | Use Case              | Best For                |
+| ------------- | --------------------- | ----------------------- |
+| `adaptive` ✅ | General conversation  | InkaWallet (default)    |
+| `fast`        | Low latency responses | Quick commands          |
+| `smart_turn`  | Complex conversation  | ML-based turn detection |
+| `scribe`      | Note-taking           | Dictation               |
+| `captions`    | Live captioning       | Accessibility           |
 
 ---
 
@@ -55,6 +62,7 @@ Based on Speechmatics Voice SDK presets:
 ### Service: `SpeechmaticsService`
 
 #### Connection & Streaming
+
 ```dart
 // Connect to WebSocket with conversational preset
 await speechmatics.connect(
@@ -73,6 +81,7 @@ await speechmatics.endStream();
 ```
 
 #### Listen to Results
+
 ```dart
 // Word-by-word updates (low latency)
 speechmatics.partialTranscripts.listen((text) {
@@ -93,6 +102,7 @@ speechmatics.segments.listen((segment) {
 ```
 
 #### State Management
+
 ```dart
 bool isConnected = speechmatics.isConnected;
 bool isStreaming = speechmatics.isStreaming;
@@ -107,6 +117,7 @@ speechmatics.dispose();
 ## Key Differences from Previous Implementation
 
 ### ❌ OLD (Batch HTTP API)
+
 - HTTP POST to `/v2/jobs` endpoint
 - Upload complete audio file
 - Wait for processing
@@ -115,6 +126,7 @@ speechmatics.dispose();
 - High latency (seconds to minutes)
 
 ### ✅ NEW (Real-time WebSocket)
+
 - WebSocket streaming to `/v2` endpoint
 - Stream audio chunks in real-time
 - Receive word-by-word updates
@@ -130,21 +142,22 @@ speechmatics.dispose();
 
 From Speechmatics Python Voice SDK → Flutter Dart adaptation:
 
-| Voice SDK Feature | Flutter Implementation |
-|-------------------|------------------------|
-| `VoiceAgentClient` | `SpeechmaticsService` |
-| `AgentServerMessageType.ADD_SEGMENT` | `segments` stream |
-| Automatic turn detection | `_turnDetectionTimer` (800ms) |
-| Speaker management | Speaker ID in segments |
-| Preset configurations | `connect(preset: 'adaptive')` |
-| Microphone streaming | `sendAudio(audioBytes)` |
-| Event handlers `@client.on()` | Stream listeners |
+| Voice SDK Feature                    | Flutter Implementation        |
+| ------------------------------------ | ----------------------------- |
+| `VoiceAgentClient`                   | `SpeechmaticsService`         |
+| `AgentServerMessageType.ADD_SEGMENT` | `segments` stream             |
+| Automatic turn detection             | `_turnDetectionTimer` (800ms) |
+| Speaker management                   | Speaker ID in segments        |
+| Preset configurations                | `connect(preset: 'adaptive')` |
+| Microphone streaming                 | `sendAudio(audioBytes)`       |
+| Event handlers `@client.on()`        | Stream listeners              |
 
 ---
 
 ## Configuration Details
 
 ### StartRecognition Message
+
 ```json
 {
   "message": "StartRecognition",
@@ -170,6 +183,7 @@ From Speechmatics Python Voice SDK → Flutter Dart adaptation:
 ### WebSocket Message Types
 
 #### Incoming (from Speechmatics)
+
 - `RecognitionStarted` - Connection established
 - `AddPartialTranscript` - Word-by-word updates
 - `AddTranscript` - Final segment transcripts
@@ -179,6 +193,7 @@ From Speechmatics Python Voice SDK → Flutter Dart adaptation:
 - `Info` - Informational messages
 
 #### Outgoing (to Speechmatics)
+
 - `StartRecognition` - Begin session with config
 - Binary audio data - PCM chunks
 - `EndOfStream` - Signal end of turn
@@ -188,11 +203,12 @@ From Speechmatics Python Voice SDK → Flutter Dart adaptation:
 ## Dependencies Added
 
 ### pubspec.yaml
+
 ```yaml
 dependencies:
-  web_socket_channel: ^3.0.1  # NEW - WebSocket support
-  http: ^1.1.2                 # Existing - batch API
-  shared_preferences: ^2.2.2   # Existing - API key storage
+  web_socket_channel: ^3.0.1 # NEW - WebSocket support
+  http: ^1.1.2 # Existing - batch API
+  shared_preferences: ^2.2.2 # Existing - API key storage
 ```
 
 ---
@@ -213,12 +229,14 @@ The `VoiceCommandService` should now use `SpeechmaticsService` for:
 ## Next Steps
 
 ### Immediate (Required for Testing)
+
 1. ✅ Install `web_socket_channel` package
 2. ⏳ Configure Speechmatics API key in settings
 3. ⏳ Integrate with `VoiceCommandService`
 4. ⏳ Test on real Android/iOS device with microphone
 
 ### Enhancement (Future)
+
 1. Audio chunk buffering for optimal WebSocket performance
 2. Retry logic for connection failures
 3. Network quality detection and adaptive streaming
@@ -259,6 +277,6 @@ The `VoiceCommandService` should now use `SpeechmaticsService` for:
 ✅ **Automatic turn detection (Siri-like)**  
 ✅ **Intelligent segmentation and speaker detection**  
 ✅ **Based on official Speechmatics Voice SDK concepts**  
-✅ **Ready for hands-free wallet control**  
+✅ **Ready for hands-free wallet control**
 
 ⚠️ **Requires API key configuration and device testing**
