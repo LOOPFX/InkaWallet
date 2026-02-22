@@ -216,4 +216,84 @@ class ApiService {
       throw Exception('Failed to update settings');
     }
   }
-}
+
+  // Money Request APIs
+  Future<Map<String, dynamic>> createMoneyRequest({
+    required String payerIdentifier,
+    required double amount,
+    String? description,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/money-requests/create'),
+      headers: _headers,
+      body: jsonEncode({
+        'payer_identifier': payerIdentifier,
+        'amount': amount,
+        'description': description,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Failed to create request');
+    }
+  }
+
+  Future<List<dynamic>> getSentRequests() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/money-requests/sent'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch sent requests');
+    }
+  }
+
+  Future<List<dynamic>> getReceivedRequests() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/money-requests/received'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch received requests');
+    }
+  }
+
+  Future<Map<String, dynamic>> payMoneyRequest({
+    required String paymentToken,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/money-requests/pay/$paymentToken'),
+      headers: _headers,
+      body: jsonEncode({
+        'password': password,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Payment failed');
+    }
+  }
+
+  Future<List<dynamic>> getNotifications() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/money-requests/notifications'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch notifications');
+    }
+  }

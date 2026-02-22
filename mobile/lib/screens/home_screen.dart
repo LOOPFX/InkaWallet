@@ -154,10 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _ActionButton(
-                      icon: Icons.call_received,
-                      label: 'Receive',
+                      icon: Icons.request_quote,
+                      label: 'Request',
                       onPressed: () {
-                        _accessibility.speak('Receive money');
+                        _accessibility.speak('Request money');
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const ReceiveMoneyScreen()),
