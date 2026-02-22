@@ -3,6 +3,7 @@
 ## ✅ COMPLETE IMPLEMENTATION
 
 The voice control system is now **fully implemented** with:
+
 - ✅ Real-time Speechmatics WebSocket streaming
 - ✅ Microphone audio capture and streaming
 - ✅ Backend API integration for all operations
@@ -64,6 +65,7 @@ Scaffold(
 ### 4. Grant Permissions
 
 Add to `android/app/src/main/AndroidManifest.xml`:
+
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 <uses-permission android:name="android.permission.INTERNET" />
@@ -71,6 +73,7 @@ Add to `android/app/src/main/AndroidManifest.xml`:
 ```
 
 Add to `ios/Runner/Info.plist`:
+
 ```xml
 <key>NSMicrophoneUsageDescription</key>
 <string>This app needs microphone access for voice control</string>
@@ -112,38 +115,43 @@ USER: "Confirm"
 ## Supported Voice Commands
 
 ### Money Operations
-| Command | Example | Action |
-|---------|---------|--------|
-| Send money | "Send 100 to 0888123456" | Transfers money via API |
-| Request money | "Request 500 from John" | Creates payment request |
-| Check balance | "What's my balance?" | Fetches and speaks balance |
+
+| Command       | Example                  | Action                     |
+| ------------- | ------------------------ | -------------------------- |
+| Send money    | "Send 100 to 0888123456" | Transfers money via API    |
+| Request money | "Request 500 from John"  | Creates payment request    |
+| Check balance | "What's my balance?"     | Fetches and speaks balance |
 
 ### Services
-| Command | Example | Action |
-|---------|---------|--------|
-| Buy airtime | "Buy 50 kwacha airtime for 0888123456" | Purchases airtime |
-| Pay bills | "Pay electricity bill" | Initiates bill payment |
-| Scan QR | "Scan QR code" | Opens QR scanner |
-| My QR | "Show my QR" | Displays your QR code |
+
+| Command     | Example                                | Action                 |
+| ----------- | -------------------------------------- | ---------------------- |
+| Buy airtime | "Buy 50 kwacha airtime for 0888123456" | Purchases airtime      |
+| Pay bills   | "Pay electricity bill"                 | Initiates bill payment |
+| Scan QR     | "Scan QR code"                         | Opens QR scanner       |
+| My QR       | "Show my QR"                           | Displays your QR code  |
 
 ### Credit & Loans
-| Command | Example | Action |
-|---------|---------|--------|
+
+| Command      | Example                 | Action              |
+| ------------ | ----------------------- | ------------------- |
 | Credit score | "Check my credit score" | Opens credit screen |
-| BNPL | "Buy now pay later" | Opens BNPL options |
+| BNPL         | "Buy now pay later"     | Opens BNPL options  |
 
 ### Navigation & Help
-| Command | Example | Action |
-|---------|---------|--------|
-| Help | "Help" | Lists available commands |
-| Go back | "Go back" | Returns to previous screen |
-| Settings | "Open settings" | Opens settings |
+
+| Command  | Example         | Action                     |
+| -------- | --------------- | -------------------------- |
+| Help     | "Help"          | Lists available commands   |
+| Go back  | "Go back"       | Returns to previous screen |
+| Settings | "Open settings" | Opens settings             |
 
 ---
 
 ## API Integration Details
 
 ### Transactions
+
 ```dart
 // Send money - IMPLEMENTED ✅
 await ApiService().sendMoney(
@@ -165,6 +173,7 @@ final balance = result['balance'];
 ```
 
 ### Services
+
 ```dart
 // Buy airtime - IMPLEMENTED ✅
 await ApiService().buyAirtime(
@@ -189,6 +198,7 @@ await ApiService().payBill(
 ## Conversation Examples
 
 ### Example 1: Complete Information Provided
+
 ```
 USER: "Send 1000 kwacha to 0999888777"
 APP: "Sending 1000 kwacha to 0999888777. Say confirm to proceed."
@@ -198,6 +208,7 @@ APP: "Success! 1000 kwacha sent to 0999888777."
 ```
 
 ### Example 2: Missing Information (Multi-turn)
+
 ```
 USER: "Send money"
 APP: "How much would you like to send?"
@@ -211,6 +222,7 @@ APP: "Success! 500 kwacha sent to 0888123456."
 ```
 
 ### Example 3: Cancellation
+
 ```
 USER: "Send 5000 to 0888123456"
 APP: "Sending 5000 kwacha to 0888123456. Say confirm to proceed."
@@ -224,6 +236,7 @@ APP: "Action cancelled."
 ## Technical Architecture
 
 ### Audio Pipeline
+
 ```
 Microphone
   ↓ (AudioRecorder with PCM16, 16kHz, Mono)
@@ -239,6 +252,7 @@ VoiceCommandService
 ```
 
 ### Conversation Pipeline
+
 ```
 Transcript Text
   ↓
@@ -260,6 +274,7 @@ Success/Error Feedback (TTS + Haptic)
 ```
 
 ### State Management
+
 ```dart
 _conversationData = {
   'amount': 500.0,
@@ -284,6 +299,7 @@ switch (_pendingAction) {
 ## Testing Checklist
 
 ### Before Testing
+
 - [ ] Speechmatics API key configured
 - [ ] Backend API running or accessible
 - [ ] Microphone permission granted
@@ -291,6 +307,7 @@ switch (_pendingAction) {
 - [ ] Real device (not emulator)
 
 ### Test Scenarios
+
 - [ ] Simple command: "Check balance"
 - [ ] Complete command: "Send 100 to 0888123456" → "Confirm"
 - [ ] Incomplete command: "Send money" → asks amount → asks recipient
@@ -305,9 +322,11 @@ switch (_pendingAction) {
 ## Configuration
 
 ### Speechmatics Settings
+
 Current preset: **"adaptive"** (general conversation)
 
 Can be changed in `voice_command_service.dart`:
+
 ```dart
 await _speechmatics.connect(
   language: 'en',
@@ -319,9 +338,11 @@ await _speechmatics.connect(
 ```
 
 ### Turn Detection
+
 Current delay: **800ms** (time to wait after user stops speaking)
 
 Can be adjusted in `voice_command_service.dart`:
+
 ```dart
 static const Duration _turnDetectionDelay = Duration(milliseconds: 800);
 ```
@@ -331,27 +352,32 @@ static const Duration _turnDetectionDelay = Duration(milliseconds: 800);
 ## Troubleshooting
 
 ### "Failed to start conversation mode"
+
 - Check internet connection
 - Verify Speechmatics API key is valid
 - Check API quota hasn't been exceeded
 
 ### "Microphone permission required"
+
 - Grant microphone permission in device settings
 - Check AndroidManifest.xml / Info.plist has permission declarations
 
 ### "Transaction failed"
+
 - Check backend API is running
 - Verify authentication token is valid
 - Check account has sufficient balance
 - Review API error messages in console
 
 ### Poor transcription accuracy
+
 - Reduce background noise
 - Speak clearly and at normal pace
 - Check microphone quality
 - Verify audio streaming format (16-bit PCM, 16kHz)
 
 ### No audio streaming
+
 - Check `record` package is installed
 - Verify microphone permission
 - Check console for audio streaming errors
@@ -362,12 +388,14 @@ static const Duration _turnDetectionDelay = Duration(milliseconds: 800);
 ## Performance Tips
 
 ### Reduce Latency
+
 1. Use `preset: 'fast'` for quicker responses
 2. Reduce `maxDelay` to 0.5s
 3. Reduce turn detection delay to 600ms
 4. Use partial transcripts for instant feedback
 
 ### Improve Accuracy
+
 1. Use `preset: 'adaptive'` or `'smart_turn'`
 2. Enable diarization for multi-speaker scenarios
 3. Increase `maxDelay` to 1.0s for better context
@@ -378,23 +406,27 @@ static const Duration _turnDetectionDelay = Duration(milliseconds: 800);
 ## What's New in This Version
 
 ✅ **Microphone Integration**
+
 - Real audio capture via `record` package
 - Streaming to Speechmatics WebSocket
 - 16-bit PCM, 16kHz, mono format
 
 ✅ **API Integration**
+
 - All operations connected to backend
 - Send money, request money, buy airtime
 - Bill payments, balance checking
 - Proper error handling
 
 ✅ **Complete Conversation Flow**
+
 - Multi-turn dialogues working
 - Smart data extraction
 - Confirmation before execution
 - Voice + haptic feedback
 
 ✅ **Production Ready**
+
 - Error handling throughout
 - Resource cleanup on dispose
 - Permission checks

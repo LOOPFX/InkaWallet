@@ -9,6 +9,7 @@
 ## 1. 🎯 **Conversation Mode** (Siri-Like - RECOMMENDED)
 
 ### How It Works:
+
 ✅ **Continuous listening** - No need to press buttons  
 ✅ **Automatic turn detection** - Knows when you finish speaking  
 ✅ **Multi-turn conversations** - Asks for missing info, confirms actions  
@@ -53,6 +54,7 @@ await voiceService.startConversationMode();
 ## 2. 📱 **Basic Mode** (Button-Triggered)
 
 ### How It Works:
+
 - Press button to start listening
 - Say one command
 - App processes it
@@ -71,26 +73,31 @@ final result = await voiceService.listenForCommand();
 ## What Can You Say?
 
 ### Money Operations
+
 - **"Send money"** / **"Send 100 to 0888123456"**
 - **"Request money"** / **"Request 500 from John"**
 - **"Check balance"** / **"What's my balance?"**
 
 ### Services
+
 - **"Buy airtime"** / **"Buy 50 kwacha airtime"**
 - **"Pay bills"** / **"Pay electricity bill"**
 - **"Scan QR code"**
 - **"Show my QR code"**
 
 ### Credit & Loans
+
 - **"Check credit score"**
 - **"Buy now pay later"** / **"BNPL options"**
 
 ### Navigation
+
 - **"Go back"**
 - **"Open settings"**
 - **"Help"** - Lists all available commands
 
 ### Confirmations
+
 - **"Confirm"** / **"Yes"** - Proceed with action
 - **"Cancel"** / **"No"** - Abort action
 
@@ -99,11 +106,13 @@ final result = await voiceService.listenForCommand();
 ## How the Conversation Works Behind the Scenes
 
 ### 1. You Speak → Real-time Transcription
+
 ```
 Your voice → Microphone → Speechmatics WebSocket → Text transcript
 ```
 
 ### 2. Intent Extraction
+
 ```
 Transcript: "Send 100 to 0888123456"
 ↓
@@ -113,6 +122,7 @@ Recipient: 0888123456
 ```
 
 ### 3. Smart Data Collection
+
 ```
 Missing amount? → App asks: "How much?"
 Missing recipient? → App asks: "To whom?"
@@ -120,6 +130,7 @@ Have all data? → App asks: "Confirm?"
 ```
 
 ### 4. Action Execution
+
 ```
 You say "Confirm" → App actually executes:
 - Calls TransactionService().sendMoney(amount, recipient)
@@ -133,6 +144,7 @@ You say "Confirm" → App actually executes:
 ## Configuration Needed
 
 ### 1. Speechmatics API Key
+
 ```dart
 // In settings or initialization
 final speechmatics = SpeechmaticsService();
@@ -142,7 +154,9 @@ await speechmatics.setApiKey('YOUR_SPEECHMATICS_API_KEY');
 Get your API key: https://portal.speechmatics.com/settings/api-keys
 
 ### 2. Permissions
+
 The app needs:
+
 - ✅ Microphone access (for voice input)
 - ✅ Internet connection (for Speechmatics API)
 - ✅ Vibration (for haptic feedback)
@@ -152,6 +166,7 @@ The app needs:
 ## Current Implementation Status
 
 ### ✅ Fully Implemented (Voice Infrastructure)
+
 - Real-time WebSocket streaming to Speechmatics
 - Automatic turn detection (knows when you stop speaking)
 - Intent extraction (understands commands)
@@ -161,11 +176,13 @@ The app needs:
 - Conversation state management
 
 ### ⚠️ Partially Implemented (Task Execution)
+
 - Smart data extraction (amounts, phone numbers)
 - Confirmation workflows
 - Voice-guided flows for all major operations
 
 ### 🔧 Needs Integration
+
 - **Audio streaming**: Need to connect microphone capture to `_speechmatics.sendAudio()`
 - **API integration**: Need to connect to actual backend APIs:
   - `TransactionService().sendMoney()`
@@ -179,19 +196,22 @@ The app needs:
 ## How to Complete the Integration
 
 ### Step 1: Add Audio Recording
+
 Currently `_startAudioStreaming()` is a placeholder. You need to:
 
 1. Add audio recording package:
+
 ```yaml
 dependencies:
-  record: ^5.0.0  # Or similar audio recording package
+  record: ^5.0.0 # Or similar audio recording package
 ```
 
 2. Implement microphone streaming:
+
 ```dart
 Future<void> _startAudioStreaming() async {
   final recorder = AudioRecorder();
-  
+
   // Configure for Speechmatics requirements
   await recorder.start(
     const RecordConfig(
@@ -200,7 +220,7 @@ Future<void> _startAudioStreaming() async {
       numChannels: 1,                   // Mono
     ),
   );
-  
+
   // Stream audio chunks
   recorder.onStateChanged().listen((state) async {
     if (state is RecordingState) {
@@ -212,19 +232,20 @@ Future<void> _startAudioStreaming() async {
 ```
 
 ### Step 2: Connect Backend APIs
+
 Replace TODO comments in `_executePendingAction()`:
 
 ```dart
 case 'send_money_confirm':
   // OLD: Placeholder voice feedback only
   await _accessibility.speak('Transaction confirmed...');
-  
+
   // NEW: Actually execute transaction
   final result = await TransactionService().sendMoney(
     amount: _conversationData['amount'],
     recipient: _conversationData['recipient'],
   );
-  
+
   if (result.success) {
     await _accessibility.speak('Money sent successfully!');
     await vibrateSuccess();
@@ -236,6 +257,7 @@ case 'send_money_confirm':
 ```
 
 ### Step 3: Add Navigation Callbacks
+
 Let screens know when voice commands want to navigate:
 
 ```dart
@@ -295,6 +317,7 @@ case 'scan_qr':
 ## Testing on Real Device
 
 ### Requirements:
+
 1. Real Android/iOS device (emulator won't work for voice)
 2. Speechmatics API key configured
 3. Internet connection
@@ -302,6 +325,7 @@ case 'scan_qr':
 5. Backend APIs running (or mock them)
 
 ### Test Commands:
+
 1. "Check balance" (simplest - no confirmation needed)
 2. "Send 100 to 0888123456" then "Confirm"
 3. "Buy airtime" → "50 kwacha" → "0888123456" → "Confirm"
@@ -312,14 +336,16 @@ case 'scan_qr':
 ## Summary
 
 ### Yes! The app CAN now:
+
 ✅ Listen to user speech continuously (Siri-like)  
 ✅ Understand what they want (intent extraction)  
 ✅ Ask for missing information (multi-turn conversation)  
 ✅ Confirm before executing (safety)  
 ✅ Actually execute tasks (send money, buy airtime, etc.)  
-✅ Provide voice feedback (tells you what's happening)  
+✅ Provide voice feedback (tells you what's happening)
 
 ### What's needed to make it work:
+
 1. ⚠️ Microphone audio streaming implementation (connect recorder to Speechmatics)
 2. ⚠️ Backend API integration (connect to actual transaction services)
 3. ⚠️ Speechmatics API key configuration

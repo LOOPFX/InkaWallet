@@ -5,25 +5,28 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
+import '../config/app_config.dart';
 
 /// Service for Speechmatics Real-time conversational voice AI
-/// Based on Speechmatics Voice SDK concepts adapted for Flutter
+/// 
+/// NOW CONNECTS TO BACKEND PROXY - API key safely stored in backend .env
 /// 
 /// Features:
-/// - Real-time WebSocket streaming
+/// - Real-time WebSocket streaming via backend proxy
 /// - Automatic turn detection (knows when user finished speaking)
 /// - Intelligent segmentation (groups words into meaningful chunks)
 /// - Low-latency transcription for conversational AI
 /// - Speaker diarization support
+/// - SECURE: API key never exposed to mobile app
 class SpeechmaticsService {
   static final SpeechmaticsService _instance = SpeechmaticsService._internal();
   factory SpeechmaticsService() => _instance;
   SpeechmaticsService._internal();
 
-  // Speechmatics WebSocket endpoint for real-time transcription
-  static const String _realtimeUrl = 'wss://eu2.rt.speechmatics.com/v2';
+  // Connect to backend WebSocket proxy (NOT directly to Speechmatics)
+  // Backend handles API key from .env file
+  static String get _realtimeUrl => AppConfig.voiceWebSocketUrl;
   static const String _batchUrl = 'https://asr.api.speechmatics.com/v2';
-  String? _apiKey;
   
   // WebSocket connection state
   WebSocketChannel? _channel;
@@ -58,27 +61,28 @@ class SpeechmaticsService {
   Stream<String> get finalTranscripts => _finalTranscriptController.stream;
   Stream<Map<String, dynamic>> get segments => _segmentController.stream;
   
-  /// Initialize with API key from secure storage
+  /// Initialize service
+  /// 
+  /// NOTE: API key is NO LONGER needed on mobile app!
+  /// Backend proxy handles authentication with Speechmatics using .env file
   Future<void> initialize() async {
-    final prefs = await SharedPreferences.getInstance();
-    _apiKey = prefs.getString('speechmatics_api_key');
-    
-    // For demo purposes, set a placeholder
-    // In production, this should be fetched from environment or secure storage
-    _apiKey ??= 'YOUR_SPEECHMATICS_API_KEY';
-    
-    _isInitialized = _apiKey != null && _apiKey!.isNotEmpty;
-  }
-  
-  /// Set API key
-  Future<void> setApiKey(String apiKey) async {
-    _apiKey = apiKey;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('speechmatics_api_key', apiKey);
     _isInitialized = true;
+    print('✅ Speechmatics service initialized (using backend proxy)');
   }
   
-  /// Connect to Speechmatics real-time WebSocket API
+  /// Set API key (DEPRECATED - not needed anymore)
+  /// 
+  /// API key is now stored securely in backend .env file
+  @deprecated
+  Future<void> setApiKey(String apiKey) async {
+    print('⚠️  setApiKey() is deprecated. API key is now in backend .env file');
+  }
+  
+  /// Connect to Speechmatics real-time WebSocket API via backend proxy
+  /// 
+  /// Backend proxy securely handles Speechmatics API key from .env file
+  /// Mobile app connects to: ws://localhost:3000/ws/voice
+  /// Backend connects to: wss://eu2.rt.speechmatics.com/v2
   /// 
   /// Presets available (from Voice SDK):
   /// - 'fast': low latency, fast responses
@@ -93,18 +97,19 @@ class SpeechmaticsService {
     bool enablePartials = true,
     double maxDelay = 0.7, // Low latency for interactive conversation
   }) async {
-    if (!_isInitialized || _apiKey == null) {
-      throw Exception('Speechmatics API not initialized. Please set API key.');
+    if (!_isInitialized) {
+      throw Exception('Speechmatics service not initialized. Call initialize() first.');
     }
     
     if (_isConnected) {
-      print('Already connected to Speechmatics');
+      print('Already connected to Speechmatics via backend proxy');
       return true;
     }
     
     try {
-      // Connect to WebSocket with authentication
-      final uri = Uri.parse('$_realtimeUrl?jwt=$_apiKey');
+      // Connect to backend WebSocket proxy (no API key needed - backend handles it)
+      print('🔌 Connecting to backend voice proxy: $_realtimeUrl');
+      final uri = Uri.parse(_realtimeUrl);
       _channel = WebSocketChannel.connect(uri);
       
       // Wait for connection to open
@@ -143,11 +148,11 @@ class SpeechmaticsService {
       
       _isConnected = true;
       _sequenceNumber = 0;
-      print('Connected to Speechmatics real-time API (preset: $preset)');
+      print('✅ Connected to Speechmatics via backend proxy (preset: $preset)');
       return true;
       
     } catch (e) {
-      print('Failed to connect to Speechmatics: $e');
+      print('❌ Failed to connect to backend voice proxy: $e');
       _isConnected = false;
       return false;
     }
@@ -342,78 +347,23 @@ class SpeechmaticsService {
   
   /// Transcribe audio file (batch mode) - for recorded files only
   /// For real-time conversation, use connect() + sendAudio() instead
+  /// 
+  /// NOTE: Batch API still requires API key. Consider proxying through backend.
   Future<Map<String, dynamic>> transcribeAudio({
     required String audioFilePath,
     String language = 'en',
     bool enableDiarization = false,
     bool enableEntities = true,
   }) async {
-    if (!_isInitialized || _apiKey == null) {
-      throw Exception('Speechmatics API not initialized. Please set API key.');
-    }
-    
-    try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$_batchUrl/jobs'),
-      );
-      
-      request.headers['Authorization'] = 'Bearer $_apiKey';
-      
-      // Add audio file
-      request.files.add(
-        await http.MultipartFile.fromPath('data_file', audioFilePath),
-      );
-      
-      // Add configuration
-      final config = {
-        'type': 'transcription',
-        'transcription_config': {
-          'language': language,
-          'operating_point': 'enhanced',
-          'diarization': enableDiarization ? 'speaker' : 'none',
-          'enable_entities': enableEntities,
-        }
-      };
-      
-      request.fields['config'] = jsonEncode(config);
-      
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-      
-      if (response.statusCode == 201) {
-        return jsonDecode(responseBody);
-      } else {
-        throw Exception('Transcription failed: $responseBody');
-      }
-    } catch (e) {
-      throw Exception('Speechmatics transcription error: $e');
-    }
+    throw UnimplementedError(
+      'Batch transcription requires API key. '
+      'Use real-time WebSocket connection via backend proxy instead.'
+    );
   }
   
-  /// Get batch job status
+  /// Get batch job status (deprecated - use WebSocket streaming instead)
   Future<Map<String, dynamic>> getJobStatus(String jobId) async {
-    if (!_isInitialized || _apiKey == null) {
-      throw Exception('Speechmatics API not initialized');
-    }
-    
-    try {
-      final response = await http.get(
-        Uri.parse('$_batchUrl/jobs/$jobId'),
-        headers: {
-          'Authorization': 'Bearer $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-      
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to get job status: ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching job status: $e');
-    }
+    throw UnimplementedError('Use real-time WebSocket connection instead of batch API');
   }
   
   //
