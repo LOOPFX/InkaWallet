@@ -7,6 +7,11 @@ import 'send_money_screen.dart';
 import 'receive_money_screen.dart';
 import 'transactions_screen.dart';
 import 'settings_screen.dart';
+import 'airtime_screen.dart';
+import 'bills_screen.dart';
+import 'topup_screen.dart';
+import 'my_qr_screen.dart';
+import 'scan_pay_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -135,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 24),
               
-              // Action Buttons
+              // Primary Action Buttons
               Row(
                 children: [
                   Expanded(
@@ -148,6 +153,117 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           MaterialPageRoute(builder: (_) => const SendMoneyScreen()),
                         );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.request_quote,
+                      label: 'Request',
+                      onPressed: () {
+                        _accessibility.speak('Request money');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ReceiveMoneyScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // QR Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.qr_code,
+                      label: 'My QR',
+                      onPressed: () {
+                        _accessibility.speak('My QR code');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const MyQRScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _ActionButton(
+                      icon: Icons.qr_code_scanner,
+                      label: 'Scan & Pay',
+                      onPressed: () {
+                        _accessibility.speak('Scan QR to pay');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ScanPayScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Services Section
+              Text(
+                'Services',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                children: [
+                  _ServiceButton(
+                    icon: Icons.phone_android,
+                    label: 'Airtime',
+                    color: Colors.orange,
+                    onPressed: () async {
+                      _accessibility.speak('Buy airtime');
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AirtimeScreen()),
+                      );
+                      if (result == true) _loadData();
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.receipt_long,
+                    label: 'Pay Bills',
+                    color: Colors.blue,
+                    onPressed: () async {
+                      _accessibility.speak('Pay bills');
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BillsScreen()),
+                      );
+                      if (result == true) _loadData();
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.add_circle,
+                    label: 'Top Up',
+                    color: Colors.green,
+                    onPressed: () async {
+                      _accessibility.speak('Top up wallet');
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TopUpScreen()),
+                      );
+                      if (result == true) _loadData();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
                       },
                     ),
                   ),
@@ -275,6 +391,46 @@ class _TransactionTile extends StatelessWidget {
           style: TextStyle(
             color: isSent ? Colors.red : Colors.green,
             fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ServiceButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ServiceButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 32, color: color),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
           ),
         ),
       ),

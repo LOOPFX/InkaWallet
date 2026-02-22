@@ -10,6 +10,8 @@ import walletRoutes from './routes/wallet.routes';
 import voiceRoutes from './routes/voice.routes';
 import adminRoutes from './routes/admin.routes';
 import moneyRequestRoutes from './routes/money-request.routes';
+import servicesRoutes from './routes/services.routes';
+import qrRoutes from './routes/qr.routes';
 
 dotenv.config();
 
@@ -31,6 +33,8 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/money-requests', moneyRequestRoutes);
+app.use('/api/services', servicesRoutes);
+app.use('/api/qr', qrRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

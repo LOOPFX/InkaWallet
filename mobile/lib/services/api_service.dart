@@ -297,3 +297,133 @@ class ApiService {
       throw Exception('Failed to fetch notifications');
     }
   }
+  // Services APIs
+  Future<Map<String, dynamic>> buyAirtime({
+    required String phoneNumber,
+    required String provider,
+    required double amount,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/services/airtime'),
+      headers: _headers,
+      body: jsonEncode({
+        'phone_number': phoneNumber,
+        'provider': provider,
+        'amount': amount,
+        'password': password,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Airtime purchase failed');
+    }
+  }
+
+  Future<List<String>> getBillProviders(String billType) async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/services/providers/$billType'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<String>.from(data['providers']);
+    } else {
+      throw Exception('Failed to fetch providers');
+    }
+  }
+
+  Future<Map<String, dynamic>> payBill({
+    required String billType,
+    required String provider,
+    required String accountNumber,
+    required double amount,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/services/bill'),
+      headers: _headers,
+      body: jsonEncode({
+        'bill_type': billType,
+        'provider': provider,
+        'account_number': accountNumber,
+        'amount': amount,
+        'password': password,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Bill payment failed');
+    }
+  }
+
+  Future<Map<String, dynamic>> topUpWallet({
+    required String source,
+    required double amount,
+    required String sourceReference,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/services/topup'),
+      headers: _headers,
+      body: jsonEncode({
+        'source': source,
+        'amount': amount,
+        'source_reference': sourceReference,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Top-up failed');
+    }
+  }
+
+  Future<List<dynamic>> getServiceHistory(String type) async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/services/history/$type'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch history');
+    }
+  }
+
+  // QR APIs
+  Future<String> getMyQRData() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/qr/me'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['qr_data'];
+    } else {
+      throw Exception('Failed to generate QR');
+    }
+  }
+
+  Future<Map<String, dynamic>> validateQRCode(String qrData) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/qr/validate'),
+      headers: _headers,
+      body: jsonEncode({
+        'qr_data': qrData,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Invalid QR code');
+    }
+  }

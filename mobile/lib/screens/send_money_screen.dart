@@ -5,7 +5,14 @@ import '../providers/wallet_provider.dart';
 import '../services/accessibility_service.dart';
 
 class SendMoneyScreen extends StatefulWidget {
-  const SendMoneyScreen({super.key});
+  final String? prefilledRecipient;
+  final String? recipientName;
+  
+  const SendMoneyScreen({
+    super.key,
+    this.prefilledRecipient,
+    this.recipientName,
+  });
 
   @override
   State<SendMoneyScreen> createState() => _SendMoneyScreenState();
@@ -23,6 +30,14 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   void initState() {
     super.initState();
     _accessibility.speak('Send money screen');
+    
+    // Prefill recipient if provided (from QR scan)
+    if (widget.prefilledRecipient != null) {
+      _phoneController.text = widget.prefilledRecipient!;
+      if (widget.recipientName != null) {
+        _accessibility.speak('Sending to ${widget.recipientName}');
+      }
+    }
   }
 
   @override
