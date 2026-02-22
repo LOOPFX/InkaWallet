@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/api_service.dart';
 import 'send_money_screen.dart';
 
@@ -14,36 +16,84 @@ class ScanPayScreen extends StatefulWidget {
 class _ScanPayScreenState extends State<ScanPayScreen> {
   final _apiService = ApiService();
   MobileScannerController cameraController = MobileScannerController();
+  final BarcodeScanner _barcodeScanner = BarcodeScanner();
   bool _isProcessing = false;
 
   @override
   void dispose() {
     cameraController.dispose();
+    _barcodeScanner.close();
     super.dispose();
   }
 
   Future<void> _pickImageAndScan() async {
     try {
+      // Request gallery permission
+      final status = await Permission.photos.request();
+      if (!status.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gallery permission is required to scan QR from images'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       
       if (image != null) {
-        // In a production app, you would decode the QR from the image here
-        // For now, show a message
+        // Show processing indicator
+        setState(() {
+          _isProcessing = true;
+        });
+
+        try {
+          // Decode QR code from image
+          final inputImage = InputImage.fromFilePath(image.path);
+          final List<Barcode> barcodes = await _barcodeScanner.processImage(inputImage);
+          
+          if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+            await _processQRCode(barcodes.first.rawValue!);
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No QR code found in the image'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              setState(() {
+                _isProcessing = false;
+              });
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error scanning QR from image: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            setState(() {
+              _isProcessing = false;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gallery QR scanning requires additional setup'),
-            backgroundColor: Colors.orange,
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error picking image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 

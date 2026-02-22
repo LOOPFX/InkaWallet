@@ -6,6 +6,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MyQRScreen extends StatefulWidget {
   const MyQRScreen({Key? key}) : super(key: key);
@@ -50,6 +52,33 @@ class _MyQRScreenState extends State<MyQRScreen> {
 
   Future<void> _saveQRToGallery() async {
     try {
+      // Request storage permission
+      PermissionStatus status;
+      if (Platform.isAndroid) {
+        if (await Permission.photos.isGranted || await Permission.storage.isGranted) {
+          status = PermissionStatus.granted;
+        } else {
+          status = await Permission.photos.request();
+          if (!status.isGranted) {
+            status = await Permission.storage.request();
+          }
+        }
+      } else {
+        status = await Permission.photos.request();
+      }
+
+      if (!status.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Storage permission is required to save QR code'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
       // Get the QR widget boundary
       final boundary = _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
@@ -61,19 +90,29 @@ class _MyQRScreenState extends State<MyQRScreen> {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final pngBytes = byteData!.buffer.asUint8List();
 
-      // Save to gallery (simplified - in production use image_gallery_saver package)
-      final directory = await getApplicationDocumentsDirectory();
-      final imagePath = '${directory.path}/inkawallet_qr_${DateTime.now().millisecondsSinceEpoch}.png';
-      final imageFile = File(imagePath);
-      await imageFile.writeAsBytes(pngBytes);
+      // Save to device gallery
+      final result = await ImageGallerySaver.saveImage(
+        pngBytes,
+        quality: 100,
+        name: 'inkawallet_qr_${DateTime.now().millisecondsSinceEpoch}',
+      );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('QR code saved to: $imagePath'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (result['isSuccess'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('QR code saved to gallery successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to save QR code to gallery'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
