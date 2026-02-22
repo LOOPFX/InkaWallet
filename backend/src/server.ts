@@ -12,6 +12,8 @@ import adminRoutes from './routes/admin.routes';
 import moneyRequestRoutes from './routes/money-request.routes';
 import servicesRoutes from './routes/services.routes';
 import qrRoutes from './routes/qr.routes';
+import creditRoutes from './routes/credit.routes';
+import bnplRoutes from './routes/bnpl.routes';
 
 dotenv.config();
 
@@ -35,6 +37,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/money-requests', moneyRequestRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/qr', qrRoutes);
+app.use('/api/credit', creditRoutes);
+app.use('/api/bnpl', bnplRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

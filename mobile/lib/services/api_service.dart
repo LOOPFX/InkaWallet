@@ -427,3 +427,104 @@ class ApiService {
       throw Exception(jsonDecode(response.body)['error'] ?? 'Invalid QR code');
     }
   }
+
+  // Credit Score APIs
+  Future<Map<String, dynamic>> getCreditScore() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/credit/score'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch credit score');
+    }
+  }
+
+  Future<Map<String, dynamic>> recalculateCreditScore() async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/credit/recalculate'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to recalculate credit score');
+    }
+  }
+
+  Future<Map<String, dynamic>> getCreditHistory() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/credit/history'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch credit history');
+    }
+  }
+
+  // BNPL APIs
+  Future<Map<String, dynamic>> getBNPLLoans() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/bnpl/loans'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch loans');
+    }
+  }
+
+  Future<Map<String, dynamic>> applyForBNPL({
+    required String merchantName,
+    required String itemDescription,
+    required double amount,
+    required int installments,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/bnpl/apply'),
+      headers: _headers,
+      body: jsonEncode({
+        'merchant_name': merchantName,
+        'item_description': itemDescription,
+        'amount': amount,
+        'installments': installments,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'BNPL application failed');
+    }
+  }
+
+  Future<Map<String, dynamic>> payBNPL({
+    required String loanId,
+    required String password,
+    String? paymentMethod,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/bnpl/pay'),
+      headers: _headers,
+      body: jsonEncode({
+        'loan_id': loanId,
+        'password': password,
+        'payment_method': paymentMethod ?? 'inkawallet',
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['error'] ?? 'Payment failed');
+    }
+  }
+}

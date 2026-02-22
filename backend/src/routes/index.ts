@@ -4,3 +4,5 @@ export { default as transactionRoutes } from './transaction.routes';
 export { default as walletRoutes } from './wallet.routes';
 export { default as voiceRoutes } from './voice.routes';
 export { default as adminRoutes } from './admin.routes';
+export { default as creditRoutes } from './credit.routes';
+export { default as bnplRoutes } from './bnpl.routes';

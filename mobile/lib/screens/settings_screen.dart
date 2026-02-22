@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:local_auth/local_auth.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/accessibility_service.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
@@ -172,6 +173,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
+          
+          const Divider(height: 32),
+          
+          const Text(
+            'Appearance',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) => SwitchListTile(
+              title: const Text('Dark Mode'),
+              subtitle: const Text('Use dark theme'),
+              value: themeProvider.isDarkMode,
+              onChanged: (value) {
+                themeProvider.toggleTheme();
+                _accessibility.speak(
+                  value ? 'Dark mode enabled' : 'Dark mode disabled',
+                );
+              },
+            ),
+          ),
           
           const Divider(height: 32),
           

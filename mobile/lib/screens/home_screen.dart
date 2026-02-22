@@ -12,6 +12,8 @@ import 'bills_screen.dart';
 import 'topup_screen.dart';
 import 'my_qr_screen.dart';
 import 'scan_pay_screen.dart';
+import 'credit_score_screen.dart';
+import 'bnpl_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -259,6 +261,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         MaterialPageRoute(builder: (_) => const TopUpScreen()),
                       );
                       if (result == true) _loadData();
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.credit_score,
+                    label: 'Credit Score',
+                    color: const Color(0xFF7C3AED),
+                    onPressed: () {
+                      _accessibility.speak('Credit score');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreditScoreScreen()),
+                      );
+                    },
+                  ),
+                  _ServiceButton(
+                    icon: Icons.shopping_cart,
+                    label: 'BNPL',
+                    color: Colors.pink,
+                    onPressed: () {
+                      _accessibility.speak('Buy Now Pay Later');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BNPLScreen()),
+                      );
                     },
                   ),
                 ],
