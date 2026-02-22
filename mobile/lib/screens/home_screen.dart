@@ -82,6 +82,43 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          Consumer<AuthProvider>(
+                            builder: (context, auth, _) {
+                              final accountNumber = auth.user?['account_number'] ?? 'N/A';
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white24,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.account_balance_wallet, color: Colors.white70, size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      accountNumber,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () {
+                                        // Copy to clipboard
+                                        _accessibility.speak('Account number copied');
+                                      },
+                                      child: const Icon(Icons.copy, color: Colors.white70, size: 16),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                           if (wallet.isLocked)
                             const Padding(
                               padding: EdgeInsets.only(top: 8),

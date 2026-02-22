@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import '../providers/wallet_provider.dart';
 import '../services/accessibility_service.dart';
 
@@ -30,6 +31,38 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     _amountController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickContact() async {
+    try {
+      // Request permission
+      if (await FlutterContacts.requestPermission()) {
+        // Pick a contact
+        final contact = await FlutterContacts.openExternalPick();
+        if (contact != null) {
+          // Get full contact details
+          final fullContact = await FlutterContacts.getContact(contact.id);
+          if (fullContact != null && fullContact.phones.isNotEmpty) {
+            final phone = fullContact.phones.first.number.replaceAll(RegExp(r'[^\d+]'), '');
+            setState(() {
+              _phoneController.text = phone;
+            });
+            await _accessibility.speak('Contact selected: ${fullContact.displayName}');
+          } else {
+            await _accessibility.speak('Selected contact has no phone number');
+          }
+        }
+      } else {
+        await _accessibility.speak('Contacts permission denied');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Contacts permission is required')),
+          );
+        }
+      }
+    } catch (e) {
+      await _accessibility.speak('Error accessing contacts');
+    }
   }
 
   Future<void> _sendMoney() async {
@@ -64,9 +97,14 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Recipient Phone Number',
-                  prefixIcon: Icon(Icons.phone),
+                  prefixIcon: const Icon(Icons.phone),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.contacts),
+                    onPressed: _pickContact,
+                    tooltip: 'Pick from contacts',
+                  ),
                   hintText: '+265888123456',
                 ),
                 validator: (value) => value == null || value.isEmpty

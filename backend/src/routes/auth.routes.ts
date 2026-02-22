@@ -14,12 +14,15 @@ router.post('/register',
   body('phone_number').notEmpty(),
   async (req: Request, res: Response) => {
     try {
+      console.log('Raw request body:', JSON.stringify(req.body, null, 2));
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        console.error('Validation errors:', errors.array());
+        return res.status(400).json({ error: errors.array()[0].msg, errors: errors.array() });
       }
 
       const { email, password, full_name, phone_number, accessibility_enabled = true } = req.body;
+      console.log('Registration attempt:', { email, full_name, phone_number, accessibility_enabled });
 
       // Check if user exists
       const [existing]: any = await db.query('SELECT id FROM users WHERE email = ? OR phone_number = ?', [email, phone_number]);
@@ -38,6 +41,10 @@ router.post('/register',
 
       const userId = result.insertId;
 
+      // Generate account number
+      const accountNumber = `IW${String(userId * 1000 + Math.floor(Math.random() * 1000)).padStart(10, '0')}`;
+      await db.query('UPDATE users SET account_number = ? WHERE id = ?', [accountNumber, userId]);
+
       // Create wallet with default 100,000 MKW
       await db.query('INSERT INTO wallets (user_id, balance) VALUES (?, 100000.00)', [userId]);
 
@@ -51,7 +58,7 @@ router.post('/register',
       res.status(201).json({
         message: 'Registration successful',
         token,
-        user: { id: userId, email, full_name, accessibility_enabled }
+        user: { id: userId, email, full_name, phone_number, account_number: accountNumber, accessibility_enabled }
       });
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -75,7 +82,7 @@ router.post('/login',
 
       // Get user
       const [users]: any = await db.query(
-        'SELECT id, email, password_hash, full_name, is_admin, is_active, accessibility_enabled FROM users WHERE email = ?',
+        'SELECT id, email, password_hash, full_name, phone_number, account_number, is_admin, is_active, accessibility_enabled FROM users WHERE email = ?',
         [email]
       );
 
@@ -109,6 +116,8 @@ router.post('/login',
           id: user.id,
           email: user.email,
           full_name: user.full_name,
+          phone_number: user.phone_number,
+          account_number: user.account_number,
           is_admin: user.is_admin,
           accessibility_enabled: user.accessibility_enabled
         }
