@@ -9,6 +9,7 @@
 ## 📋 Overview
 
 InkaWallet now includes advanced financial features:
+
 1. **Credit Scoring System** - Track creditworthiness based on transaction history
 2. **Buy Now Pay Later (BNPL)** - Flexible installment-based purchases
 3. **Dark Mode** - Enhanced UI accessibility with theme toggle
@@ -20,7 +21,9 @@ InkaWallet now includes advanced financial features:
 ### Tables Created
 
 #### 1. credit_scores
+
 Stores user credit scores (300-850 range)
+
 - `score` - Overall credit score
 - `payment_history_score` - Based on BNPL payment reliability (0-100)
 - `transaction_volume_score` - Based on transaction activity (0-100)
@@ -30,7 +33,9 @@ Stores user credit scores (300-850 range)
 - `total_repaid` - Total amount repaid
 
 #### 2. bnpl_loans
+
 Manages Buy Now Pay Later loans
+
 - `loan_id` - Unique loan identifier (BNPL-timestamp-random)
 - `merchant_name` - Where the purchase was made
 - `item_description` - What was purchased
@@ -42,7 +47,9 @@ Manages Buy Now Pay Later loans
 - `status` - pending, active, completed, defaulted, cancelled
 
 #### 3. bnpl_payments
+
 Tracks individual BNPL payments
+
 - `payment_id` - Unique payment identifier
 - `installment_number` - Which payment (1, 2, 3, 4...)
 - `is_late` - Whether payment was late
@@ -50,7 +57,9 @@ Tracks individual BNPL payments
 - `late_fee` - Penalty fee (MKW 100/day)
 
 #### 4. credit_history
+
 Logs all credit-related events
+
 - Event types: score_calculated, loan_applied, loan_approved, loan_rejected,
   payment_made, payment_missed, loan_completed, loan_defaulted
 
@@ -61,9 +70,11 @@ Logs all credit-related events
 ### Credit Score APIs
 
 #### GET /api/credit/score
+
 Get user's current credit score
 
 **Response:**
+
 ```json
 {
   "score": 662,
@@ -80,6 +91,7 @@ Get user's current credit score
 ```
 
 **Credit Ratings:**
+
 - 750-850: Excellent (Max loan: MKW 500,000)
 - 650-749: Good (Max loan: MKW 300,000)
 - 550-649: Fair (Max loan: MKW 150,000)
@@ -88,9 +100,11 @@ Get user's current credit score
 - <400: Not eligible for BNPL
 
 #### POST /api/credit/recalculate
+
 Recalculate credit score based on current activity
 
 **Response:**
+
 ```json
 {
   "score": 662,
@@ -101,15 +115,18 @@ Recalculate credit score based on current activity
 ```
 
 **Score Calculation:**
+
 - Payment History: 0-350 points (35% weight)
 - Transaction Volume: 0-150 points (15% weight)
 - Account Age: 0-50 points (5% weight)
 - Penalties: -50 points per default
 
 #### GET /api/credit/history
+
 Get credit history events
 
 **Response:**
+
 ```json
 {
   "history": [
@@ -128,9 +145,11 @@ Get credit history events
 ### BNPL APIs
 
 #### GET /api/bnpl/loans
+
 Get all user's BNPL loans
 
 **Response:**
+
 ```json
 {
   "loans": [
@@ -151,9 +170,11 @@ Get all user's BNPL loans
 ```
 
 #### POST /api/bnpl/apply
+
 Apply for a BNPL loan
 
 **Request:**
+
 ```json
 {
   "merchant_name": "Game Store",
@@ -164,12 +185,14 @@ Apply for a BNPL loan
 ```
 
 **Requirements:**
+
 - Credit score >= 400
 - Amount <= credit limit based on score
 - Maximum 3 active loans
 - Amount between MKW 1,000 - 1,000,000
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -182,9 +205,11 @@ Apply for a BNPL loan
 ```
 
 #### POST /api/bnpl/pay
+
 Make a BNPL installment payment
 
 **Request:**
+
 ```json
 {
   "loan_id": "BNPL-1771753458357-4771",
@@ -194,6 +219,7 @@ Make a BNPL installment payment
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -209,11 +235,13 @@ Make a BNPL installment payment
 ```
 
 **Late Payments:**
+
 - Late fee: MKW 100 per day
 - Affects credit score negatively
 - Payment still processes if balance sufficient
 
 #### GET /api/bnpl/loans/:loanId
+
 Get detailed loan information including payment history
 
 ---
@@ -221,9 +249,11 @@ Get detailed loan information including payment history
 ## 📱 Frontend Screens
 
 ### 1. Credit Score Screen
+
 **Path**: `/screens/credit_score_screen.dart`
 
 **Features:**
+
 - Large score display with color coding
 - Credit rating (Excellent/Good/Fair/Poor)
 - BNPL eligibility indicator
@@ -234,15 +264,18 @@ Get detailed loan information including payment history
 - Recalculate score button
 
 **UI Elements:**
+
 - Gradient card with score visualization
 - Progress bars for score components
 - Stat cards with icons
 - History list with event types
 
 ### 2. BNPL Screen
+
 **Path**: `/screens/bnpl_screen.dart`
 
 **Features:**
+
 - Tabbed interface (Active Loans / Completed)
 - Loan cards with progress indicators
 - Apply for new BNPL loan
@@ -251,6 +284,7 @@ Get detailed loan information including payment history
 - Payment history
 
 **Loan Application Dialog:**
+
 - Merchant name input
 - Item description
 - Amount (1,000 - 1,000,000 MKW)
@@ -258,15 +292,18 @@ Get detailed loan information including payment history
 - 5% interest rate display
 
 **Loan Details:**
+
 - Full loan information
 - Payment schedule
 - Next payment date
 - Make payment button
 
 ### 3. Dark Mode
+
 **Path**: `/providers/theme_provider.dart`
 
 **Features:**
+
 - Toggle in Settings screen
 - Persisted across app restarts
 - Smooth theme transitions
@@ -274,6 +311,7 @@ Get detailed loan information including payment history
 - Material 3 design
 
 **Theme Colors:**
+
 - Primary: #7C3AED (Purple)
 - Light mode: White backgrounds
 - Dark mode: #121212 background, #1F1B24 cards
@@ -283,6 +321,7 @@ Get detailed loan information including payment history
 ## 🎯 User Flows
 
 ### Credit Score Flow
+
 1. User taps "Credit Score" from home
 2. Screen loads current score
 3. User can:
@@ -292,6 +331,7 @@ Get detailed loan information including payment history
    - Tap refresh icon to recalculate
 
 ### BNPL Application Flow
+
 1. User taps "BNPL" from home
 2. Taps "Apply for BNPL" FAB
 3. Fills application form:
@@ -307,6 +347,7 @@ Get detailed loan information including payment history
 6. User sees loan in Active Loans tab
 
 ### BNPL Payment Flow
+
 1. User views active loan
 2. Taps loan card
 3. Bottom sheet shows details
@@ -319,6 +360,7 @@ Get detailed loan information including payment history
    - If final payment, loan status → completed
 
 ### Dark Mode Flow
+
 1. User opens Settings
 2. Scrolls to "Appearance" section
 3. Toggles "Dark Mode" switch
@@ -330,7 +372,9 @@ Get detailed loan information including payment history
 ## 🧪 Testing
 
 ### Test Script
+
 Run comprehensive tests:
+
 ```bash
 cd /home/loopfx/InkaWallet/backend
 ./test_credit_bnpl.sh
@@ -339,6 +383,7 @@ cd /home/loopfx/InkaWallet/backend
 ### Manual Testing Checklist
 
 #### Credit Score
+
 - [ ] Score displays correctly
 - [ ] Breakdown components show (payment history, volume, age)
 - [ ] Rating matches score range
@@ -349,6 +394,7 @@ cd /home/loopfx/InkaWallet/backend
 - [ ] Pull-to-refresh works
 
 #### BNPL Application
+
 - [ ] Application dialog opens
 - [ ] Form validation works
 - [ ] Installment dropdown works (4, 6, 12)
@@ -359,6 +405,7 @@ cd /home/loopfx/InkaWallet/backend
 - [ ] Loan appears in Active tab
 
 #### BNPL Payment
+
 - [ ] Loan card displays correct info
 - [ ] Progress bar accurate
 - [ ] Tap opens details sheet
@@ -372,6 +419,7 @@ cd /home/loopfx/InkaWallet/backend
 - [ ] Completed loans move to Completed tab
 
 #### Dark Mode
+
 - [ ] Toggle works in Settings
 - [ ] Theme changes immediately
 - [ ] Preference persisted after restart
@@ -420,11 +468,13 @@ cd /home/loopfx/InkaWallet/backend
 ## 🔒 Security Features
 
 ### Credit Score
+
 - Read-only for users (cannot manually modify)
 - Automatic calculation based on verified data
 - Protected by authentication
 
 ### BNPL
+
 - Password required for all payments
 - Credit score verification before approval
 - Balance check before payment processing
@@ -432,6 +482,7 @@ cd /home/loopfx/InkaWallet/backend
 - Rate limiting via credit limits
 
 ### Dark Mode
+
 - No security implications
 - Client-side preference only
 
@@ -440,25 +491,29 @@ cd /home/loopfx/InkaWallet/backend
 ## 💰 Business Rules
 
 ### Interest Rate
+
 - Fixed at 5% per loan (not compound)
 - Applied once at loan creation
 
 ### Late Fees
+
 - MKW 100 per day after due date
 - No maximum cap (incentivizes timely payment)
 - Added to installment amount
 
 ### Credit Limits by Score
-| Score Range | Max Loan | Rating |
-|------------|---------|---------|
-| 750-850 | 500,000 | Excellent |
-| 650-749 | 300,000 | Good |
-| 550-649 | 150,000 | Fair |
-| 450-549 | 75,000 | Poor |
-| 400-449 | 50,000 | Very Poor |
-| <400 | 0 | Not Eligible |
+
+| Score Range | Max Loan | Rating       |
+| ----------- | -------- | ------------ |
+| 750-850     | 500,000  | Excellent    |
+| 650-749     | 300,000  | Good         |
+| 550-649     | 150,000  | Fair         |
+| 450-549     | 75,000   | Poor         |
+| 400-449     | 50,000   | Very Poor    |
+| <400        | 0        | Not Eligible |
 
 ### Payment Schedule
+
 - Monthly installments
 - First payment: 30 days after loan approval
 - Subsequent payments: Monthly thereafter
@@ -469,6 +524,7 @@ cd /home/loopfx/InkaWallet/backend
 ## 🎨 UI/UX Design
 
 ### Color Scheme
+
 - Primary: Purple (#7C3AED)
 - Success: Green
 - Warning: Orange
@@ -476,11 +532,13 @@ cd /home/loopfx/InkaWallet/backend
 - Info: Blue
 
 ### Typography
+
 - Headlines: Bold, large
 - Body: Regular, readable
 - Stats: Bold, highlighted
 
 ### Icons
+
 - Credit Score: `Icons.credit_score`
 - BNPL: `Icons.shopping_cart`
 - Dark Mode: Auto-switch based on state
@@ -492,6 +550,7 @@ cd /home/loopfx/InkaWallet/backend
 ## 📈 Performance Metrics
 
 ### API Response Times
+
 - GET /credit/score: ~50ms
 - POST /credit/recalculate: ~100ms
 - POST /bnpl/apply: ~120ms
@@ -499,6 +558,7 @@ cd /home/loopfx/InkaWallet/backend
 - GET /bnpl/loans: ~60ms
 
 ### Database Queries
+
 - Optimized with indexes
 - Minimal joins
 - Efficient score calculation
@@ -508,16 +568,20 @@ cd /home/loopfx/InkaWallet/backend
 ## 🚀 Deployment Notes
 
 ### Database Migration
+
 ```bash
 mysql -u root -p < backend/database/credit_bnpl_schema.sql
 ```
 
 ### Backend Routes
+
 Already registered in `server.ts`:
+
 - `/api/credit/*`
 - `/api/bnpl/*`
 
 ### Frontend Dependencies
+
 All packages already in `pubspec.yaml`
 
 ---
@@ -525,6 +589,7 @@ All packages already in `pubspec.yaml`
 ## 📝 Future Enhancements
 
 ### Potential Features
+
 1. **Credit Score Notifications**
    - Push notifications for score changes
    - Monthly credit reports
@@ -560,6 +625,7 @@ None currently identified.
 ## 📞 Support
 
 For questions or issues:
+
 - Check logs: Backend console, MySQL error logs
 - Test scripts: `test_credit_bnpl.sh`
 - Documentation: This file

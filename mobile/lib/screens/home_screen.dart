@@ -290,26 +290,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.request_quote,
-                      label: 'Request',
-                      onPressed: () {
-                        _accessibility.speak('Request money');
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ReceiveMoneyScreen()),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
               
               // Recent Transactions
               Row(

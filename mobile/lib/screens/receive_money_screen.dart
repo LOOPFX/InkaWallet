@@ -263,32 +263,3 @@ class _ReceiveMoneyScreenState extends State<ReceiveMoneyScreen> {
     );
   }
 }
-              DropdownButtonFormField<String>(
-                value: _paymentMethod,
-                decoration: const InputDecoration(
-                  labelText: 'From Payment Method',
-                  prefixIcon: Icon(Icons.account_balance),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'mpamba', child: Text('TNM Mpamba')),
-                  DropdownMenuItem(value: 'airtel_money', child: Text('Airtel Money')),
-                  DropdownMenuItem(value: 'bank', child: Text('Bank Transfer')),
-                ],
-                onChanged: (value) {
-                  setState(() => _paymentMethod = value!);
-                  _accessibility.speak('From: $value');
-                },
-              ),
-              const SizedBox(height: 24),
-              
-              ElevatedButton(
-                onPressed: _receiveMoney,
-                child: const Text('Simulate Receive'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
