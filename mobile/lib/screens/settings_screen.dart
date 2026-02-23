@@ -6,8 +6,10 @@ import '../services/accessibility_service.dart';
 import '../services/biometric_service.dart';
 import '../services/voice_command_service.dart';
 import '../services/api_service.dart';
+import '../services/kyc_service.dart';
 import '../widgets/voice_enabled_screen.dart';
 import 'login_screen.dart';
+import 'kyc_status_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _biometric = BiometricService();
   final _voiceCommand = VoiceCommandService();
   final _api = ApiService();
+  final _kycService = KycService();
   
   bool _accessibilityEnabled = true;
   bool _voiceEnabled = true;
@@ -28,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _voiceControlEnabled = false;
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
+  String? _kycStatus;
   
   @override
   void initState() {
@@ -38,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _initialize() async {
     await _loadSettings();
     await _checkBiometrics();
+    await _loadKycStatus();
   }
 
   Future<void> _loadSettings() async {
@@ -53,6 +58,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkBiometrics() async {
     final available = await _biometric.checkAvailability();
     setState(() => _biometricAvailable = available);
+  }
+
+  Future<void> _loadKycStatus() async {
+    final status = await _kycService.getKycStatus();
+    if (status != null && mounted) {
+      setState(() => _kycStatus = status['kyc_status']);
+    }
   }
 
   Future<void> _updateSettings() async {
@@ -299,6 +311,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: Text('Biometric Not Available'),
               subtitle: Text('Your device does not support biometric authentication'),
             ),
+          
+          const Divider(height: 32),
+          
+          // KYC Verification Section
+          const Text(
+            'Account Verification',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          
+          Card(
+            child: ListTile(
+              leading: Icon(
+                _kycStatus == 'verified' ? Icons.verified_user : Icons.security,
+                color: _kycStatus == 'verified' ? Colors.green : Colors.orange,
+              ),
+              title: const Text('KYC Verification'),
+              subtitle: Text(
+                _kycStatus == null
+                    ? 'Loading...'
+                    : _kycStatus == 'verified'
+                        ? 'Your account is verified'
+                        : _kycStatus == 'pending_verification'
+                            ? 'Verification pending'
+                            : 'Complete verification to unlock full features',
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const KycStatusScreen()),
+                );
+                _loadKycStatus(); // Reload status after returning
+              },
+            ),
+          ),
           
           const Divider(height: 32),
           
