@@ -5,6 +5,7 @@ import '../providers/wallet_provider.dart';
 import '../services/accessibility_service.dart';
 import '../services/voice_command_service.dart';
 import '../widgets/voice_enabled_screen.dart';
+import '../widgets/auth_confirmation_dialog.dart';
 
 class SendMoneyScreen extends StatefulWidget {
   final String? prefilledRecipient;
@@ -28,8 +29,21 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   final _accessibility = AccessibilityService();
   final _voiceService = VoiceCommandService();
   String _paymentMethod = 'inkawallet';
+  String? _selectedBank;
   bool _expectingPhoneInput = false;
   bool _expectingAmountInput = false;
+  
+  final List<String> _malawianBanks = [
+    'National Bank of Malawi',
+    'Standard Bank',
+    'FDH Bank',
+    'NBS Bank',
+    'CDH Investment Bank',
+    'Ecobank Malawi',
+    'First Capital Bank',
+    'Nedbank Malawi',
+    'MyBucks Banking Corporation',
+  ];
   
   @override
   void initState() {
@@ -87,6 +101,20 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
 
   Future<void> _sendMoney() async {
     if (_formKey.currentState!.validate()) {
+      // Require authentication
+      final authenticated = await AuthConfirmationDialog.show(
+        context: context,
+        title: 'Confirm Transaction',
+        message: 'Authenticate to send MKW ${_amountController.text} to ${_phoneController.text}',
+      );
+
+      if (!authenticated) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required')),
+        );
+        return;
+      }
+
       final wallet = Provider.of<WalletProvider>(context, listen: false);
       final success = await wallet.sendMoney(
         receiverPhone: _phoneController.text.trim(),
@@ -201,23 +229,38 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Recipient field - changes label based on payment method
                 TextFormField(
                   controller: _phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: _paymentMethod == 'bank' || _paymentMethod == 'inkawallet'
+                      ? TextInputType.text
+                      : TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Recipient Phone Number',
-                    prefixIcon: const Icon(Icons.phone),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.contacts),
-                      onPressed: _pickContact,
-                      tooltip: 'Pick from contacts',
+                    labelText: _paymentMethod == 'bank' || _paymentMethod == 'inkawallet'
+                        ? 'Account Number'
+                        : 'Recipient Phone Number',
+                    prefixIcon: Icon(
+                      _paymentMethod == 'bank' || _paymentMethod == 'inkawallet'
+                          ? Icons.account_balance
+                          : Icons.phone,
                     ),
-                    hintText: '+265888123456',
+                    suffixIcon: _paymentMethod != 'bank' && _paymentMethod != 'inkawallet'
+                        ? IconButton(
+                            icon: const Icon(Icons.contacts),
+                            onPressed: _pickContact,
+                            tooltip: 'Pick from contacts',
+                          )
+                        : null,
+                    hintText: _paymentMethod == 'bank' 
+                        ? 'Enter bank account number'
+                        : _paymentMethod == 'inkawallet'
+                        ? 'Enter InkaWallet account number'
+                        : '+265888123456',
                   ),
                   validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter phone number'
+                      ? 'Please enter ${_paymentMethod == "bank" || _paymentMethod == "inkawallet" ? "account number" : "phone number"}'
                       : null,
-                  onTap: () => _accessibility.speak('Recipient phone number field'),
+                  onTap: () => _accessibility.speak(_paymentMethod == 'bank' || _paymentMethod == 'inkawallet' ? 'Account number field' : 'Recipient phone number field'),
                 ),
                 const SizedBox(height: 16),
               
@@ -254,11 +297,38 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   DropdownMenuItem(value: 'bank', child: Text('Bank Transfer')),
                 ],
                 onChanged: (value) {
-                  setState(() => _paymentMethod = value!);
+                  setState(() {
+                    _paymentMethod = value!;
+                    _selectedBank = null; // Reset bank selection
+                    _phoneController.clear(); // Clear recipient field
+                  });
                   _accessibility.speak('Payment method: $value');
                 },
               ),
               const SizedBox(height: 16),
+              
+              // Bank selection dropdown (only visible when bank transfer is selected)
+              if (_paymentMethod == 'bank') ...[
+                DropdownButtonFormField<String>(
+                  value: _selectedBank,
+                  decoration: const InputDecoration(
+                    labelText: 'Select Bank',
+                    prefixIcon: Icon(Icons.account_balance),
+                  ),
+                  items: _malawianBanks.map((bank) {
+                    return DropdownMenuItem(
+                      value: bank,
+                      child: Text(bank),
+                    );
+                  }).toList(),
+                  validator: (value) => value == null ? 'Please select a bank' : null,
+                  onChanged: (value) {
+                    setState(() => _selectedBank = value);
+                    _accessibility.speak('Bank selected: $value');
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
               
               TextFormField(
                 controller: _descriptionController,

@@ -4,6 +4,7 @@ import '../providers/wallet_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/accessibility_service.dart';
 import '../services/voice_command_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/voice_enabled_screen.dart';
 import 'send_money_screen.dart';
 import 'receive_money_screen.dart';
@@ -16,6 +17,7 @@ import 'my_qr_screen.dart';
 import 'scan_pay_screen.dart';
 import 'credit_score_screen.dart';
 import 'bnpl_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _accessibility = AccessibilityService();
   final _voiceService = VoiceCommandService();
+  bool _obscureBalance = false;
   
   @override
   void initState() {
@@ -197,6 +200,57 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           title: const Text('InkaWallet'),
           actions: [
+            // Notification bell
+            ChangeNotifierProvider.value(
+              value: NotificationService(),
+              child: Consumer<NotificationService>(
+                builder: (context, notificationService, _) {
+                  final unreadCount = notificationService.unreadCount;
+                  
+                  return Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const NotificationsScreen(),
+                            ),
+                          );
+                        },
+                        tooltip: 'Notifications',
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              unreadCount > 9 ? '9+' : '$unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
@@ -226,16 +280,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
-                            const Text(
-                              'Total Balance',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Total Balance',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    _obscureBalance ? Icons.visibility : Icons.visibility_off,
+                                    color: Colors.white70,
+                                  ),
+                                  onPressed: () {
+                                    setState(() => _obscureBalance = !_obscureBalance);
+                                  },
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              wallet.formattedBalance,
+                              _obscureBalance ? '****' : wallet.formattedBalance,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 36,

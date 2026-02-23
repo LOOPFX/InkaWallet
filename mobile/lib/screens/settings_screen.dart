@@ -95,6 +95,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
     
     return Scaffold(
       appBar: AppBar(
@@ -103,6 +105,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // User Profile Section
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: const Color(0xFF7C3AED),
+                    child: Text(
+                      user?['full_name']?.toString().substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(fontSize: 32, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user?['full_name'] ?? 'User',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (user?['email'] != null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.email, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          user!['email'],
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 4),
+                  if (user?['phone_number'] != null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.phone, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          user!['phone_number'],
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
           const Text(
             'Accessibility Features',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

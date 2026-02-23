@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../widgets/auth_confirmation_dialog.dart';
 
 class TopUpScreen extends StatefulWidget {
   const TopUpScreen({Key? key}) : super(key: key);
@@ -34,6 +35,22 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
   Future<void> _topUp() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Require authentication
+    final authenticated = await AuthConfirmationDialog.show(
+      context: context,
+      title: 'Confirm Top-Up',
+      message: 'Authenticate to add MKW ${_amountController.text} to your wallet',
+    );
+
+    if (!authenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication required')),
+        );
+      }
+      return;
+    }
 
     setState(() {
       _isLoading = true;

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/notification_service.dart';
 
 class WalletProvider with ChangeNotifier {
   final ApiService _api = ApiService();
   final AccessibilityService _accessibility = AccessibilityService();
+  final NotificationService _notifications = NotificationService();
   
   double _balance = 0.0;
   String _currency = 'MKW';
@@ -74,6 +76,18 @@ class WalletProvider with ChangeNotifier {
       await fetchBalance();
       await fetchTransactions();
       
+      // Add notification
+      await _notifications.addNotification(
+        title: 'Money Sent',
+        message: 'Successfully sent $currency ${amount.toStringAsFixed(2)} to $receiverPhone',
+        type: 'transaction',
+        data: {
+          'type': 'send',
+          'amount': amount,
+          'recipient': receiverPhone,
+        },
+      );
+      
       await _accessibility.announceAndVibrate(
         'Successfully sent $currency ${amount.toStringAsFixed(2)} to $receiverPhone',
         important: true,
@@ -105,6 +119,18 @@ class WalletProvider with ChangeNotifier {
       
       await fetchBalance();
       await fetchTransactions();
+      
+      // Add notification
+      await _notifications.addNotification(
+        title: 'Money Received',
+        message: 'Received $currency ${amount.toStringAsFixed(2)} from $paymentMethod',
+        type: 'transaction',
+        data: {
+          'type': 'receive',
+          'amount': amount,
+          'source': paymentMethod,
+        },
+      );
       
       await _accessibility.announceAndVibrate(
         'Received $currency ${amount.toStringAsFixed(2)} from $paymentMethod',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../widgets/auth_confirmation_dialog.dart';
 import 'package:intl/intl.dart';
 
 class BNPLScreen extends StatefulWidget {
@@ -376,6 +377,22 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
                 }
 
                 Navigator.pop(context);
+
+                // Require authentication
+                final authenticated = await AuthConfirmationDialog.show(
+                  context: context,
+                  title: 'Confirm BNPL Application',
+                  message: 'Authenticate to apply for a loan of MKW $amount',
+                );
+
+                if (!authenticated) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Authentication required')),
+                    );
+                  }
+                  return;
+                }
 
                 try {
                   final result = await _api.applyForBNPL(
