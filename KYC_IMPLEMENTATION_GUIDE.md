@@ -1,4 +1,5 @@
 # KYC (Know Your Customer) Implementation Guide
+
 ## InkaWallet - Malawi Regulatory Compliance
 
 ---
@@ -6,6 +7,7 @@
 ## Overview
 
 InkaWallet has implemented a comprehensive KYC (Know Your Customer) system to comply with:
+
 - **Reserve Bank of Malawi** regulations
 - **Financial Intelligence Authority (FIA)** requirements
 - **Anti-Money Laundering (AML)** standards
@@ -20,6 +22,7 @@ This system is designed for **inclusive finance**, supporting people with disabi
 ### Reserve Bank of Malawi Requirements
 
 InkaWallet must verify customer identity for:
+
 - All new wallet accounts
 - Transactions exceeding MKW 50,000
 - Monthly transaction volumes
@@ -28,6 +31,7 @@ InkaWallet must verify customer identity for:
 ### Verification Tiers
 
 #### Tier 1 - Basic (Default)
+
 - **Daily Limit**: MKW 50,000
 - **Monthly Limit**: MKW 500,000
 - **Requirements**:
@@ -37,6 +41,7 @@ InkaWallet must verify customer identity for:
 - **Processing Time**: 24-48 hours
 
 #### Tier 2 - Enhanced
+
 - **Daily Limit**: MKW 200,000
 - **Monthly Limit**: MKW 2,000,000
 - **Additional Requirements**:
@@ -46,6 +51,7 @@ InkaWallet must verify customer identity for:
 - **Processing Time**: 3-5 business days
 
 #### Tier 3 - Full
+
 - **Daily Limit**: Unlimited
 - **Monthly Limit**: Unlimited
 - **Additional Requirements**:
@@ -99,12 +105,14 @@ InkaWallet must verify customer identity for:
 ### User Endpoints
 
 #### Get KYC Profile
+
 ```
 GET /api/kyc/profile
 Authorization: Bearer <token>
 ```
 
 #### Create/Update KYC Profile
+
 ```
 POST /api/kyc/profile
 Authorization: Bearer <token>
@@ -134,6 +142,7 @@ Body: {
 ```
 
 #### Upload Document
+
 ```
 POST /api/kyc/documents
 Authorization: Bearer <token>
@@ -147,24 +156,28 @@ Form Data:
 ```
 
 #### Get Uploaded Documents
+
 ```
 GET /api/kyc/documents
 Authorization: Bearer <token>
 ```
 
 #### Submit for Verification
+
 ```
 POST /api/kyc/submit
 Authorization: Bearer <token>
 ```
 
 #### Get KYC Status
+
 ```
 GET /api/kyc/status
 Authorization: Bearer <token>
 ```
 
 #### Check Transaction Limits
+
 ```
 POST /api/kyc/check-limits
 Authorization: Bearer <token>
@@ -189,12 +202,14 @@ Response: {
 ### Admin Endpoints
 
 #### Get Pending Verifications
+
 ```
 GET /api/kyc/admin/pending
 Authorization: Bearer <admin-token>
 ```
 
 #### Verify/Reject KYC
+
 ```
 PUT /api/kyc/admin/verify/:kycProfileId
 Authorization: Bearer <admin-token>
@@ -218,6 +233,7 @@ Body (Reject): {
 ## Mobile Screens
 
 ### 1. KYC Profile Screen (`kyc_profile_screen.dart`)
+
 - Comprehensive form for personal information
 - At least one ID required validation
 - Disability & accessibility support section
@@ -227,6 +243,7 @@ Body (Reject): {
 - **Auto-save**: Progress saved locally
 
 ### 2. KYC Document Upload Screen (`kyc_document_upload_screen.dart`)
+
 - Camera/gallery selection
 - Voice-guided photo capture
 - Document type selection
@@ -236,6 +253,7 @@ Body (Reject): {
 - **Formats**: JPEG, PNG, PDF (max 10MB)
 
 ### 3. KYC Status Screen (`kyc_status_screen.dart`)
+
 - Real-time verification status
 - Transaction limits display
 - Tier information
@@ -244,6 +262,7 @@ Body (Reject): {
 - Tier upgrade options
 
 ### 4. KYC Service (`kyc_service.dart`)
+
 - Transaction limit checks before operations
 - KYC status queries
 - Verification level checks
@@ -253,6 +272,7 @@ Body (Reject): {
 ## Accessibility Features
 
 ### For Blind/Visually Impaired Users
+
 1. **Voice-Guided Document Capture**
    - "Position ID card in frame"
    - "Hold still"
@@ -269,6 +289,7 @@ Body (Reject): {
    - Assisted verification option
 
 ### For Users with Other Disabilities
+
 1. **Sign Language Support**
    - Video upload option for sign language users
    - Visual instructions
@@ -293,21 +314,21 @@ All transaction endpoints must check KYC limits:
 
 ```typescript
 // Example in transaction route
-router.post('/send-money', authenticateToken, async (req, res) => {
+router.post("/send-money", authenticateToken, async (req, res) => {
   const { amount, receiverId } = req.body;
-  
+
   // Check KYC limits
   const kycCheck = await checkKycLimits(req.user.userId, amount);
-  
+
   if (!kycCheck.allowed) {
     return res.status(403).json({
       message: kycCheck.message,
       daily_limit: kycCheck.daily_limit,
       monthly_limit: kycCheck.monthly_limit,
-      kyc_status: kycCheck.kyc_status
+      kyc_status: kycCheck.kyc_status,
     });
   }
-  
+
   // Proceed with transaction...
 });
 ```
@@ -346,6 +367,7 @@ if (!kycCheck['success']) {
 ### Suspicious Activity Detection
 
 The system automatically flags transactions for:
+
 1. **Velocity Checks**
    - Multiple transactions in short time
    - Unusual transaction patterns
@@ -365,6 +387,7 @@ The system automatically flags transactions for:
 ### Admin Monitoring Dashboard
 
 Administrators can:
+
 - View flagged transactions
 - Investigate suspicious activity
 - Mark accounts for enhanced monitoring
@@ -375,18 +398,21 @@ Administrators can:
 ## Document Requirements by Region
 
 ### All Regions (Malawi)
+
 - **Primary ID**: National ID (mandatory for citizens)
 - **Alternative IDs**: Passport, Driver's License, Voter's ID
 - **Proof of Address**: Utility bill (ESCOM, water), bank statement, lease agreement
 - **Selfie**: Recent photo for biometric matching
 
 ### For Foreign Nationals
+
 - **Passport**: Mandatory
 - **Visa/Residence Permit**: Current and valid
 - **Work Permit**: For employed foreigners
 - **Proof of Address**: Same as citizens
 
 ### For Businesses
+
 - **Business Registration Certificate**
 - **Tax Clearance Certificate**
 - **Director IDs**: All directors' identification
@@ -399,26 +425,31 @@ Administrators can:
 ### Test User Flow
 
 1. **Register New Account**
+
    ```
    POST /api/auth/register
    ```
 
 2. **Complete KYC Profile**
+
    ```
    POST /api/kyc/profile
    ```
 
 3. **Upload Documents**
+
    ```
    POST /api/kyc/documents (at least 2)
    ```
 
 4. **Submit for Verification**
+
    ```
    POST /api/kyc/submit
    ```
 
 5. **Admin Verification** (as admin)
+
    ```
    GET /api/kyc/admin/pending
    PUT /api/kyc/admin/verify/:id
@@ -432,20 +463,24 @@ Administrators can:
 ### Test Scenarios
 
 #### Scenario 1: Verified User
+
 - Status: `verified`
 - Tier: `tier1`
 - Daily Limit: MKW 50,000
 - Expected: Can transact up to limit
 
 #### Scenario 2: Unverified User
+
 - Status: `not_started` or `incomplete`
 - Expected: Restricted to basic features only
 
 #### Scenario 3: Pending User
+
 - Status: `pending_verification`
 - Expected: Limited transactions, awaiting approval
 
 #### Scenario 4: Rejected User
+
 - Status: `rejected`
 - Reason: Displayed to user
 - Expected: Can resubmit with corrections
@@ -455,6 +490,7 @@ Administrators can:
 ## Security Considerations
 
 ### Data Protection
+
 1. **Encryption**
    - All KYC data encrypted at rest
    - SSL/TLS for data in transit
@@ -471,6 +507,7 @@ Administrators can:
    - Regular security scans
 
 ### Privacy Compliance
+
 - GDPR-aligned data handling
 - User consent required
 - Right to data access
@@ -502,24 +539,28 @@ Administrators can:
 ## Next Steps
 
 1. **Apply Database Schema**
+
    ```bash
    cd backend
    mysql -u root -p inkawallet_db < database/kyc_schema.sql
    ```
 
 2. **Install Dependencies**
+
    ```bash
    cd backend
    npm install multer http-parser
    ```
 
 3. **Test Backend**
+
    ```bash
    npm start
    # Test endpoints with Postman
    ```
 
 4. **Build Mobile App**
+
    ```bash
    cd mobile
    flutter pub get
@@ -535,6 +576,7 @@ Administrators can:
 ## Support
 
 For assistance with KYC implementation:
+
 - Technical issues: Check logs in backend console
 - Regulatory questions: Contact Reserve Bank of Malawi
 - User support: Guide users through voice-enabled interface

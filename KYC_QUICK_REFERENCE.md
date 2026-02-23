@@ -92,11 +92,13 @@
 ### For Admins
 
 1. **View Pending Verifications**
+
    ```
    GET /api/kyc/admin/pending
    ```
 
 2. **Approve KYC**
+
    ```
    PUT /api/kyc/admin/verify/:id
    Body: {
@@ -119,16 +121,19 @@
 ## Verification Tiers
 
 ### Tier 1 - Basic
+
 - Daily: MKW 50,000
 - Monthly: MKW 500,000
 - Requirements: ID + Proof of address + Selfie
 
 ### Tier 2 - Enhanced
+
 - Daily: MKW 200,000
 - Monthly: MKW 2,000,000
 - Requirements: Tier 1 + Employment letter
 
 ### Tier 3 - Full
+
 - Daily: Unlimited
 - Monthly: Unlimited
 - Requirements: Tier 2 + Face-to-face verification
@@ -136,6 +141,7 @@
 ## Transaction Enforcement
 
 All financial operations check KYC limits:
+
 - Send money
 - Buy airtime
 - Pay bills
@@ -143,6 +149,7 @@ All financial operations check KYC limits:
 - Withdraw funds
 
 If limit exceeded or KYC not verified:
+
 - User sees prompt to complete KYC
 - Transaction is blocked
 - Clear message explains reason
@@ -150,16 +157,19 @@ If limit exceeded or KYC not verified:
 ## Accessibility Features
 
 ### Voice-Guided Document Capture
+
 - "Position ID card in frame"
 - "Hold still"
 - "Captured successfully"
 
 ### Alternative Methods
+
 - Voice input for forms
 - Assisted verification option
 - Extended timeouts
 
 ### Disability Support
+
 - Visual impairment settings
 - Hearing impairment support
 - Physical disability accommodations
@@ -167,12 +177,14 @@ If limit exceeded or KYC not verified:
 ## Security
 
 ### Data Protection
+
 - All KYC data encrypted
 - Secure file storage
 - SSL/TLS encryption
 - Access control
 
 ### Privacy
+
 - User consent required
 - Audit logs maintained
 - IP address tracking
@@ -181,12 +193,14 @@ If limit exceeded or KYC not verified:
 ## Testing
 
 Run backend test:
+
 ```bash
 cd backend
 ./test_kyc.sh
 ```
 
 Test mobile flow:
+
 ```bash
 cd mobile
 flutter run
@@ -196,16 +210,19 @@ flutter run
 ## Deployment
 
 1. **Apply Database Schema** ✓ (Done)
+
    ```bash
    mysql -u root -p inkawallet_db < database/kyc_schema.sql
    ```
 
 2. **Install Dependencies** ✓ (Done)
+
    ```bash
    npm install multer @types/multer http-parser
    ```
 
 3. **Start Backend**
+
    ```bash
    npm start
    ```
