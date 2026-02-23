@@ -30,6 +30,13 @@ class _KycStatusScreenState extends State<KycStatusScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
       
+      if (token == null || token.isEmpty) {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+        return;
+      }
+      
       final response = await http.get(
         Uri.parse('${AppConfig.apiBaseUrl}/kyc/status'),
         headers: {'Authorization': 'Bearer $token'},
@@ -40,6 +47,12 @@ class _KycStatusScreenState extends State<KycStatusScreen> {
         setState(() {
           _kycStatus = status;
         });
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // Token invalid or expired - redirect to login
+        if (mounted) {
+          await prefs.remove('token');
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       }
     } catch (e) {
       print('Error loading KYC status: $e');
