@@ -1,9 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 
 class KycService {
-  static const String baseUrl = 'http://localhost:3000/api/kyc';
+  static const String baseUrl = '${AppConfig.apiBaseUrl}/kyc';
 
   // Check if transaction is allowed based on KYC limits
   Future<Map<String, dynamic>> checkTransactionLimits(double amount) async {

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../config/app_config.dart';
 import '../services/notification_service.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -119,7 +120,7 @@ class _KycDocumentUploadScreenState extends State<KycDocumentUploadScreen> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://localhost:3000/api/kyc/documents'),
+        Uri.parse('${AppConfig.apiBaseUrl}/kyc/documents'),
       );
 
       request.headers['Authorization'] = 'Bearer $token';
@@ -184,7 +185,7 @@ class _KycDocumentUploadScreenState extends State<KycDocumentUploadScreen> {
       final token = prefs.getString('token');
 
       final response = await http.post(
-        Uri.parse('http://localhost:3000/api/kyc/submit'),
+        Uri.parse('${AppConfig.apiBaseUrl}/kyc/submit'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

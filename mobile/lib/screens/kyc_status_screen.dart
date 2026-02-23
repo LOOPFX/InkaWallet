@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 import '../services/notification_service.dart';
 
 class KycStatusScreen extends StatefulWidget {
@@ -30,7 +31,7 @@ class _KycStatusScreenState extends State<KycStatusScreen> {
       final token = prefs.getString('token');
       
       final response = await http.get(
-        Uri.parse('http://localhost:3000/api/kyc/status'),
+        Uri.parse('${AppConfig.apiBaseUrl}/kyc/status'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
