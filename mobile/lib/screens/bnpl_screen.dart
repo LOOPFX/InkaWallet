@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/auth_confirmation_dialog.dart';
-import '../widgets/voice_enabled_screen.dart';
 import '../widgets/voice_enabled_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -16,6 +16,7 @@ class BNPLScreen extends StatefulWidget {
 class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateMixin {
   final _api = ApiService();
   final _accessibility = AccessibilityService();
+  final _notifications = NotificationService();
   
   late TabController _tabController;
   bool _isLoading = true;
@@ -409,6 +410,19 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
                   );
 
                   if (mounted) {
+                    // Add notification
+                    await _notifications.addNotification(
+                      title: 'BNPL Loan Approved',
+                      message: 'MKW ${amount} loan approved for $description at $merchant',
+                      type: 'transaction',
+                      data: {
+                        'type': 'bnpl_approved',
+                        'amount': double.parse(amount),
+                        'merchant': merchant,
+                        'installments': selectedInstallments,
+                      },
+                    );
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('BNPL application approved!'),
@@ -602,6 +616,18 @@ class BNPLLoanDetails extends StatelessWidget {
                 );
 
                 if (context.mounted) {
+                  // Add notification
+                  await NotificationService().addNotification(
+                    title: 'BNPL Payment',
+                    message: 'Successfully paid installment for ${loan['item_description']}',
+                    type: 'transaction',
+                    data: {
+                      'type': 'bnpl_payment',
+                      'loanId': loan['loan_id'],
+                      'item': loan['item_description'],
+                    },
+                  );
+                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(result['message'] ?? 'Payment successful'),

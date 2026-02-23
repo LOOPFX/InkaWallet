@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
-import '../widgets/voice_enabled_screen.dart';
+import '../services/notification_service.dart';
 import '../widgets/voice_enabled_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -15,6 +15,7 @@ class CreditScoreScreen extends StatefulWidget {
 class _CreditScoreScreenState extends State<CreditScoreScreen> {
   final _api = ApiService();
   final _accessibility = AccessibilityService();
+  final _notifications = NotificationService();
   
   bool _isLoading = true;
   Map<String, dynamic>? _creditData;
@@ -74,9 +75,22 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
       
       if (mounted) {
         final change = result['score_change'] ?? 0;
+        final newScore = result['score'] ?? 0;
         final message = change >= 0 
             ? 'Score increased by $change points!' 
             : 'Score decreased by ${change.abs()} points';
+        
+        // Add notification
+        await _notifications.addNotification(
+          title: 'Credit Score Updated',
+          message: 'Your credit score is now $newScore. $message',
+          type: 'system',
+          data: {
+            'type': 'credit_score_update',
+            'newScore': newScore,
+            'change': change,
+          },
+        );
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

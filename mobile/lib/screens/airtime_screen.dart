@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/voice_enabled_screen.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,6 +19,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   final _amountController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
+  final _notifications = NotificationService();
   
   String _selectedProvider = 'airtel';
   bool _isLoading = false;
@@ -59,6 +61,19 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
       );
 
       if (mounted) {
+        // Add notification
+        await _notifications.addNotification(
+          title: 'Airtime Purchase',
+          message: 'Successfully purchased MKW ${_amountController.text} ${_selectedProvider.toUpperCase()} airtime for ${_phoneController.text}',
+          type: 'transaction',
+          data: {
+            'type': 'airtime',
+            'amount': double.parse(_amountController.text),
+            'phone': _phoneController.text,
+            'provider': _selectedProvider,
+          },
+        );
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Airtime purchased successfully!'),

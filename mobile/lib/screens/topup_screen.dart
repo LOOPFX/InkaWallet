@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/auth_confirmation_dialog.dart';
-import '../widgets/voice_enabled_screen.dart';
 import '../widgets/voice_enabled_screen.dart';
 
 class TopUpScreen extends StatefulWidget {
@@ -17,6 +17,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
   final _amountController = TextEditingController();
   final _referenceController = TextEditingController();
   final _apiService = ApiService();
+  final _notifications = NotificationService();
 
   String _selectedSource = 'mpamba';
   bool _isLoading = false;
@@ -66,6 +67,18 @@ class _TopUpScreenState extends State<TopUpScreen> {
       );
 
       if (mounted) {
+        // Add notification
+        await _notifications.addNotification(
+          title: 'Wallet Top-Up',
+          message: 'Successfully added MKW ${_amountController.text} from ${_sourceLabels[_selectedSource]}',
+          type: 'transaction',
+          data: {
+            'type': 'topup',
+            'amount': double.parse(_amountController.text),
+            'source': _selectedSource,
+          },
+        );
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Wallet topped up successfully!'),
