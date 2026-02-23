@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
 import '../widgets/auth_confirmation_dialog.dart';
+import '../widgets/voice_enabled_screen.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'package:intl/intl.dart';
 
 class BNPLScreen extends StatefulWidget {
@@ -77,7 +79,10 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Buy Now Pay Later",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Buy Now Pay Later'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -103,6 +108,7 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
         icon: const Icon(Icons.add),
         label: const Text('Apply for BNPL'),
         backgroundColor: const Color(0xFF7C3AED),
+      ),
       ),
     );
   }

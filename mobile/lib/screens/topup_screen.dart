@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 import '../widgets/auth_confirmation_dialog.dart';
+import '../widgets/voice_enabled_screen.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class TopUpScreen extends StatefulWidget {
   const TopUpScreen({Key? key}) : super(key: key);
@@ -107,7 +109,10 @@ class _TopUpScreenState extends State<TopUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Top Up",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Top Up Wallet'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -310,6 +315,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

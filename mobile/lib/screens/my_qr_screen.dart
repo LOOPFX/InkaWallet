@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../widgets/voice_enabled_screen.dart';
+import '../widgets/voice_enabled_screen.dart';
 import '../services/api_service.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
@@ -121,7 +123,10 @@ class _MyQRScreenState extends State<MyQRScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "My QR Code",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('My QR Code'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -266,6 +271,7 @@ class _MyQRScreenState extends State<MyQRScreen> {
                     ],
                   ),
                 ),
+      ),
     );
   }
 

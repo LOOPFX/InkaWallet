@@ -6,6 +6,7 @@ import '../services/accessibility_service.dart';
 import '../services/biometric_service.dart';
 import '../services/voice_command_service.dart';
 import '../services/api_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -92,13 +93,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _handleVoiceCommand(String command) async {
+    final lowerCommand = command.toLowerCase();
+    
+    if (lowerCommand.contains('logout') || lowerCommand.contains('log out') || lowerCommand.contains('sign out')) {
+      await _logout();
+    } else if (lowerCommand.contains('enable') && lowerCommand.contains('voice')) {
+      setState(() => _voiceControlEnabled = true);
+      await _updateSettings();
+      _accessibility.speak('Voice control enabled');
+    } else if (lowerCommand.contains('disable') && lowerCommand.contains('voice')) {
+      setState(() => _voiceControlEnabled = false);
+      await _updateSettings();
+      _accessibility.speak('Voice control disabled');
+    } else if (lowerCommand.contains('enable') && lowerCommand.contains('dark')) {
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      if (!themeProvider.isDarkMode) themeProvider.toggleTheme();
+      _accessibility.speak('Dark mode enabled');
+    } else if (lowerCommand.contains('enable') && lowerCommand.contains('light')) {
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      if (themeProvider.isDarkMode) themeProvider.toggleTheme();
+      _accessibility.speak('Light mode enabled');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
     
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Settings",
+      onVoiceCommand: (cmd) async { await _handleVoiceCommand(cmd["text"] ?? ""); },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
       ),
@@ -325,6 +353,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: const Text('Logout'),
           ),
         ],
+      ),
       ),
     );
   }

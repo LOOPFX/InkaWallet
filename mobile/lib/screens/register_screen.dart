@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/accessibility_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -36,6 +37,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Future<void> _handleVoiceCommand(Map<String, dynamic> command) async {
+    final commandText = command['command'] as String? ?? '';
+    final lowerCommand = commandText.toLowerCase();
+    
+    // Extract information from voice command
+    if (lowerCommand.contains('name') || lowerCommand.contains('called')) {
+      // Extract name: "my name is John Doe" or "I'm called Jane Smith"
+      final nameMatch = RegExp(r'(?:name is|called|i am) ([a-z ]+)', caseSensitive: false).firstMatch(commandText);
+      if (nameMatch != null) {
+        final name = nameMatch.group(1)?.trim();
+        if (name != null && name.isNotEmpty) {
+          setState(() => _fullNameController.text = name);
+          await _accessibility.speak('Name set to $name');
+        }
+      }
+    }
+    
+    if (lowerCommand.contains('email')) {
+      final emailMatch = RegExp(r'([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})', caseSensitive: false).firstMatch(commandText);
+      if (emailMatch != null) {
+        final email = emailMatch.group(1);
+        if (email != null) {
+          setState(() => _emailController.text = email);
+          await _accessibility.speak('Email set to $email');
+        }
+      }
+    }
+    
+    if (lowerCommand.contains('phone') || lowerCommand.contains('number')) {
+      final phoneMatch = RegExp(r'(\+?\d{10,15})').firstMatch(commandText);
+      if (phoneMatch != null) {
+        final phone = phoneMatch.group(1);
+        if (phone != null) {
+          setState(() => _phoneController.text = phone);
+          await _accessibility.speak('Phone number set to $phone');
+        }
+      }
+    }
+    
+    if (lowerCommand.contains('password')) {
+      final passwordMatch = RegExp(r'password (?:is )?([a-z0-9]+)', caseSensitive: false).firstMatch(commandText);
+      if (passwordMatch != null) {
+        final password = passwordMatch.group(1);
+        if (password != null) {
+          setState(() => _passwordController.text = password);
+          await _accessibility.speak('Password set');
+        }
+      }
+    }
+    
+    if (lowerCommand.contains('register') || lowerCommand.contains('create account') || lowerCommand.contains('sign up')) {
+      await _register();
+    }
+    
+    if (lowerCommand.contains('help')) {
+      await _accessibility.speak('You can say: my name is, followed by your name. My email is, followed by email. My phone is, followed by number. Password is, followed by password. Then say create account to register.');
+    }
+  }
+  
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -58,10 +118,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+    return VoiceEnabledScreen(
+      screenName: 'registration',
+      onVoiceCommand: _handleVoiceCommand,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Create Account'),
+        ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -195,6 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

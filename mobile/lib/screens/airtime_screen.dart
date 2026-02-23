@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -84,9 +85,29 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     }
   }
 
+  Future<void> _handleVoiceCommand(String command) async {
+    final lowerCommand = command.toLowerCase();
+    
+    // Extract amount from command like "buy airtime for 500" or "500 kwacha airtime"
+    final amountMatch = RegExp(r'(\d+)').firstMatch(lowerCommand);
+    if (amountMatch != null) {
+      _amountController.text = amountMatch.group(1)!;
+    }
+    
+    // Detect provider
+    if (lowerCommand.contains('airtel')) {
+      setState(() => _selectedProvider = 'airtel');
+    } else if (lowerCommand.contains('tnm')) {
+      setState(() => _selectedProvider = 'tnm');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Buy Airtime",
+      onVoiceCommand: (cmd) async { await _handleVoiceCommand(cmd["text"] ?? ""); },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Buy Airtime'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -277,6 +298,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

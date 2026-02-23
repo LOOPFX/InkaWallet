@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../widgets/voice_enabled_screen.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'package:intl/intl.dart';
 
 class CreditScoreScreen extends StatefulWidget {
@@ -109,7 +111,10 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Credit Score",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Credit Score'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -339,6 +344,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 

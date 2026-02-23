@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../widgets/voice_enabled_screen.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class BillsScreen extends StatefulWidget {
   const BillsScreen({Key? key}) : super(key: key);
@@ -126,7 +128,10 @@ class _BillsScreenState extends State<BillsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Pay Bills",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Pay Bills'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -313,6 +318,7 @@ class _BillsScreenState extends State<BillsScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
