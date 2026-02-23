@@ -14,6 +14,7 @@ vercel --prod
 ```
 
 **When prompted:**
+
 - Set up and deploy? **Yes**
 - Which scope? Select your account
 - Link to existing project? **No**
@@ -22,9 +23,10 @@ vercel --prod
 - Override settings? **No**
 
 **After deployment, set environment variables in Vercel dashboard:**
+
 ```
 DATABASE_HOST=your-database-host
-DATABASE_USER=your-database-user  
+DATABASE_USER=your-database-user
 DATABASE_PASSWORD=your-database-password
 DATABASE_NAME=inkawallet
 JWT_SECRET=generate-random-32-char-string
@@ -40,6 +42,7 @@ vercel --prod
 ```
 
 **Set environment variable:**
+
 ```
 NEXT_PUBLIC_API_URL=https://your-backend.vercel.app/api
 ```
@@ -58,6 +61,7 @@ flutter build apk --release
 APK location: `build/app/outputs/flutter-apk/app-release.apk`
 
 **Share with users:**
+
 - Upload to Google Drive/Dropbox
 - Send via email
 - Host on your website
@@ -80,12 +84,14 @@ Upload `build/app/outputs/bundle/release/app-release.aab` to Google Play Console
 ## ✅ Post-Deployment
 
 1. **Update mobile app config** with production API URL:
+
    ```dart
    // mobile/lib/config/app_config.dart
    static const String apiBaseUrl = 'https://your-backend.vercel.app/api';
    ```
 
 2. **Test the deployment:**
+
    ```bash
    curl https://your-backend.vercel.app/health
    ```
@@ -102,5 +108,6 @@ Upload `build/app/outputs/bundle/release/app-release.aab` to Google Play Console
 - ✅ Privacy policy URL - required for app stores
 
 For detailed instructions, see:
+
 - `DEPLOYMENT_GUIDE_VERCEL.md` - Full backend/admin deployment
 - `MOBILE_APP_DISTRIBUTION.md` - Complete mobile app guide

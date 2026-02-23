@@ -1,6 +1,7 @@
 # InkaWallet Deployment Guide - Vercel
 
 ## Prerequisites
+
 - Vercel account (sign up at https://vercel.com)
 - GitHub repository connected to Vercel
 - PostgreSQL database (recommended: Neon, Supabase, or PlanetScale)
@@ -35,6 +36,7 @@ Create `vercel.json` in the backend directory:
 ### Step 2: Update package.json
 
 Add build script for Vercel:
+
 ```json
 {
   "scripts": {
@@ -50,6 +52,7 @@ Add build script for Vercel:
 Set these in Vercel Dashboard (Settings → Environment Variables):
 
 **Required:**
+
 - `DATABASE_HOST` - Your production MySQL/PostgreSQL host
 - `DATABASE_USER` - Database username
 - `DATABASE_PASSWORD` - Database password
@@ -59,6 +62,7 @@ Set these in Vercel Dashboard (Settings → Environment Variables):
 - `NODE_ENV` - Set to `production`
 
 **Optional:**
+
 - `PORT` - 3000 (default)
 - `DATABASE_PORT` - 3306 for MySQL
 
@@ -77,6 +81,7 @@ vercel --prod
 ```
 
 Or use Vercel's GitHub integration:
+
 1. Go to https://vercel.com/new
 2. Import your GitHub repository
 3. Select `backend` as root directory
@@ -102,12 +107,14 @@ mysql -h <host> -u <user> -p <database> < database/credit_bnpl_schema.sql
 Edit `admin-web/app/page.tsx` or create a config file to use production backend URL:
 
 ```typescript
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend.vercel.app/api';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://your-backend.vercel.app/api";
 ```
 
 ### Step 2: Environment Variables
 
 Set in Vercel Dashboard:
+
 - `NEXT_PUBLIC_API_URL` - Your backend Vercel URL
 
 ### Step 3: Deploy Admin Web
@@ -118,6 +125,7 @@ vercel --prod
 ```
 
 Or via GitHub:
+
 1. Go to https://vercel.com/new
 2. Import repository
 3. Select `admin-web` as root directory
@@ -138,7 +146,7 @@ class AppConfig {
   // Production URLs
   static const String apiBaseUrl = 'https://your-backend.vercel.app/api';
   static const String apiBaseUrlProduction = 'https://your-backend.vercel.app';
-  
+
   // WebSocket for production (if supported)
   static const String wsBaseUrl = 'wss://your-backend.vercel.app';
   static const String wsBaseUrlProduction = 'wss://your-backend.vercel.app';
@@ -166,7 +174,9 @@ curl https://your-admin.vercel.app
 ## Important Notes
 
 ### WebSocket Limitations
+
 ⚠️ **Vercel has limitations with WebSockets:**
+
 - Serverless functions timeout after 10 seconds (Hobby) or 5 minutes (Pro)
 - WebSocket connections (Speechmatics) may not work reliably
 - Consider deploying WebSocket services separately to:
@@ -176,6 +186,7 @@ curl https://your-admin.vercel.app
   - Digital Ocean App Platform
 
 ### Database Recommendations
+
 - **Neon** - PostgreSQL (free tier, serverless)
 - **PlanetScale** - MySQL (free tier, serverless)
 - **Supabase** - PostgreSQL (free tier, includes auth)
@@ -183,6 +194,7 @@ curl https://your-admin.vercel.app
 - **Railway** - PostgreSQL/MySQL with easy setup
 
 ### File Uploads
+
 - Vercel serverless has 50MB deployment limit
 - Store KYC documents in:
   - AWS S3
@@ -194,16 +206,19 @@ curl https://your-admin.vercel.app
 ## Troubleshooting
 
 ### Build Fails
+
 - Check Node.js version (use 18.x or 20.x)
 - Verify all dependencies in package.json
 - Check TypeScript compilation errors
 
 ### Database Connection Issues
+
 - Verify environment variables are set correctly
 - Check database whitelist (allow Vercel IPs)
 - Test connection string locally first
 
 ### API Returns 500 Errors
+
 - Check Vercel function logs
 - Verify all environment variables are set
 - Check database connectivity
@@ -215,24 +230,28 @@ curl https://your-admin.vercel.app
 If Vercel doesn't meet your needs:
 
 ### Railway.app
+
 - Better for long-running services
 - Native WebSocket support
 - Database included
 - Easy deployment: `railway up`
 
 ### Render.com
+
 - Free tier available
 - Native databases
 - WebSocket support
 - Background workers
 
 ### AWS
+
 - Most flexible
 - EC2 for full control
 - Lambda for serverless
 - RDS for database
 
 ### Digital Ocean
+
 - App Platform
 - Droplets (VPS)
 - Managed databases

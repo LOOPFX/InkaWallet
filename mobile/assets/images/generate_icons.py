@@ -4,15 +4,16 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 
-# Colors
-PRIMARY_BLUE = (30, 136, 229)  # #1E88E5
+# InkaWallet brand colors - Using actual app theme
+PRIMARY_PURPLE = (124, 58, 237)  # #7C3AED - Deep purple (app primary color)
+LIGHT_PURPLE = (233, 213, 255)  # #E9D5FF - Light purple background
 WHITE = (255, 255, 255)
 DARK_GRAY = (66, 66, 66)
 
 def create_app_icon(size=1024):
     """Create main app icon with gradient background and IW text"""
-    # Create image with blue background
-    img = Image.new('RGB', (size, size), PRIMARY_BLUE)
+    # Create image with purple background
+    img = Image.new('RGB', (size, size), PRIMARY_PURPLE)
     draw = ImageDraw.Draw(img)
     
     # Try to load a font, fallback to default
@@ -35,7 +36,7 @@ def create_app_icon(size=1024):
     mask_draw = ImageDraw.Draw(mask)
     mask_draw.rounded_rectangle([(0, 0), (size, size)], radius=size//8, fill=255)
     
-    output = Image.new('RGB', (size, size), PRIMARY_BLUE)
+    output = Image.new('RGB', (size, size), PRIMARY_PURPLE)
     output.paste(img, (0, 0))
     
     return output
@@ -80,7 +81,7 @@ def create_splash_logo(size=512):
     title_height = bbox[3] - bbox[1]
     
     title_pos = ((size * 2 - title_width) // 2, size // 3)
-    draw.text(title_pos, title, fill=PRIMARY_BLUE, font=title_font)
+    draw.text(title_pos, title, fill=PRIMARY_PURPLE, font=title_font)
     
     # Draw subtitle
     subtitle = "Accessible Banking for Everyone"

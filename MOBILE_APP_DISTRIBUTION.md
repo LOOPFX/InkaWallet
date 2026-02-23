@@ -3,6 +3,7 @@
 ## Overview
 
 This guide covers distributing your Flutter mobile app to users via:
+
 1. Google Play Store (Android)
 2. Apple App Store (iOS)
 3. Direct APK distribution (Android only)
@@ -14,6 +15,7 @@ This guide covers distributing your Flutter mobile app to users via:
 ### Option 1: Google Play Store (Recommended)
 
 #### Prerequisites
+
 - Google Play Developer account ($25 one-time fee)
 - App signing key
 - Privacy policy URL
@@ -24,6 +26,7 @@ This guide covers distributing your Flutter mobile app to users via:
 **1. Update App Configuration**
 
 Edit `android/app/build.gradle`:
+
 ```gradle
 android {
     defaultConfig {
@@ -44,6 +47,7 @@ android {
 **3. Update App Name**
 
 Edit `android/app/src/main/AndroidManifest.xml`:
+
 ```xml
 <application
     android:label="InkaWallet"
@@ -62,6 +66,7 @@ keytool -genkey -v -keystore ~/inkawallet-release-key.jks \
 ```
 
 **Create `android/key.properties`:**
+
 ```properties
 storePassword=<password>
 keyPassword=<password>
@@ -70,6 +75,7 @@ storeFile=/home/loopfx/inkawallet-release-key.jks
 ```
 
 **Update `android/app/build.gradle`:**
+
 ```gradle
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
@@ -97,6 +103,7 @@ android {
 ```
 
 **⚠️ Add to `.gitignore`:**
+
 ```
 key.properties
 *.jks
@@ -179,16 +186,19 @@ flutter build apk --release
 #### Step 2: Distribute APK
 
 **Options:**
+
 1. **Your website:** Upload APK for direct download
 2. **Firebase App Distribution:** Free beta testing
 3. **Email/Cloud storage:** Send to specific users
 
 **User Installation:**
+
 1. Download APK to Android device
 2. Enable "Install from Unknown Sources" in Settings
 3. Tap APK file to install
 
 **⚠️ Warning Users:**
+
 - APKs outside Play Store trigger security warnings
 - Users must manually enable installation
 - No automatic updates
@@ -219,6 +229,7 @@ firebase appdistribution:distribute \
 ## 🍎 iOS Distribution (If you have Mac)
 
 ### Prerequisites
+
 - Apple Developer account ($99/year)
 - Mac computer with Xcode
 - iPhone/iPad for testing
@@ -226,6 +237,7 @@ firebase appdistribution:distribute \
 ### Step 1: Prepare iOS App
 
 **Update `ios/Runner/Info.plist`:**
+
 ```xml
 <key>CFBundleDisplayName</key>
 <string>InkaWallet</string>
@@ -235,9 +247,11 @@ firebase appdistribution:distribute \
 
 **Update Bundle Identifier:**
 Open in Xcode:
+
 ```bash
 open ios/Runner.xcworkspace
 ```
+
 - Select Runner → General
 - Change Bundle Identifier: `com.inkawallet.app`
 
@@ -287,17 +301,20 @@ dependencies:
 ### Android
 
 **1. Increment version in `build.gradle`:**
+
 ```gradle
 versionCode 2  // Must be higher than previous
 versionName "1.0.1"
 ```
 
 **2. Build new AAB:**
+
 ```bash
 flutter build appbundle --release
 ```
 
 **3. Upload to Play Console:**
+
 - Production → Create new release
 - Upload new AAB
 - Add release notes
@@ -307,6 +324,7 @@ flutter build appbundle --release
 **1. Increment version in Xcode**
 
 **2. Build and archive:**
+
 ```bash
 flutter build ios --release
 ```
@@ -326,6 +344,7 @@ flutter build apk --analyze-size
 ```
 
 **Reduce size:**
+
 - Remove unused packages
 - Optimize images
 - Use vector graphics
@@ -355,23 +374,27 @@ flutter build apk --analyze-size
 ## 🆘 Common Issues
 
 ### Build Fails
+
 - Run `flutter clean`
 - Delete `build/` folder
 - Run `flutter pub get`
 - Check Gradle version
 
 ### Signing Issues
+
 - Verify keystore path in `key.properties`
 - Check passwords are correct
 - Ensure keystore file exists
 
 ### Play Store Rejection
+
 - Review policy violations
 - Check content rating
 - Verify privacy policy
 - Test all features work
 
 ### Large App Size
+
 - Use `--split-per-abi`
 - Remove debug symbols
 - Optimize images
