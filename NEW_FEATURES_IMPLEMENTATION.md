@@ -1,39 +1,50 @@
 # InkaWallet - New Features Implementation Summary
 
 ## Implementation Date
+
 February 23, 2026
 
 ## Features Implemented
 
 ### 1. ✅ Password Visibility Toggle (Eye Icon)
+
 **Files Modified:**
+
 - `mobile/lib/screens/login_screen.dart`
 - `mobile/lib/screens/register_screen.dart`
 
 **Implementation:**
+
 - Added eye icon to all password fields
 - Toggle between visible/hidden password text
 - Uses `Icons.visibility` and `Icons.visibility_off`
 
 ### 2. ✅ Balance Visibility Toggle
+
 **Files Modified:**
+
 - `mobile/lib/screens/home_screen.dart`
 
 **Implementation:**
+
 - Eye icon on balance card header
-- Shows/hides balance amount (displays **** when hidden)
+- Shows/hides balance amount (displays \*\*\*\* when hidden)
 - Maintains state across screen interactions
 
 ### 3. ✅ Authentication Confirmation for Sensitive Operations
+
 **Files Created:**
+
 - `mobile/lib/widgets/auth_confirmation_dialog.dart`
 
 **Files Modified:**
+
 - `mobile/lib/screens/bnpl_screen.dart`
 - `mobile/lib/screens/topup_screen.dart`
 - `mobile/lib/screens/send_money_screen.dart`
 
 **Implementation:**
+
 - Uses fingerprint/biometric authentication when available
 - Falls back to password authentication
 - Required for:
@@ -42,10 +53,13 @@ February 23, 2026
   - Sending money
 
 ### 4. ✅ User Profile Display
+
 **Files Modified:**
+
 - `mobile/lib/screens/settings_screen.dart`
 
 **Implementation:**
+
 - Profile card at top of settings screen
 - Displays:
   - Avatar with first letter of name
@@ -55,10 +69,13 @@ February 23, 2026
 - Uses data from AuthProvider
 
 ### 5. ✅ Malawian Banks Integration
+
 **Files Modified:**
+
 - `mobile/lib/screens/send_money_screen.dart`
 
 **Implementation:**
+
 - Added list of 9 major Malawian banks:
   - National Bank of Malawi
   - Standard Bank
@@ -74,26 +91,33 @@ February 23, 2026
 - Dynamic field labels based on payment method
 
 ### 6. ✅ Voice AI Always Active
+
 **Files Modified:**
+
 - `mobile/lib/services/accessibility_service.dart`
 
 **Implementation:**
+
 - Changed default value of `voice_control_enabled` from `false` to `true`
 - Voice AI is now active by default
 - Can still be manually disabled via settings
 - Works with voice commands and speech-to-text
 
 ### 7. ✅ In-App Notifications System
+
 **Files Created:**
+
 - `mobile/lib/services/notification_service.dart`
 - `mobile/lib/screens/notifications_screen.dart`
 
 **Files Modified:**
+
 - `mobile/lib/main.dart`
 - `mobile/lib/screens/home_screen.dart`
 - `mobile/lib/providers/wallet_provider.dart`
 
 **Implementation:**
+
 - Complete notification system with:
   - Notification bell icon in app bar
   - Unread count badge (shows number or "9+" for 10+)
@@ -113,6 +137,7 @@ February 23, 2026
 ## Technical Details
 
 ### Authentication Flow
+
 1. User initiates sensitive operation
 2. System checks for biometric availability
 3. If available, prompts for fingerprint/face ID
@@ -121,6 +146,7 @@ February 23, 2026
 6. Operation proceeds only after successful authentication
 
 ### Notification System Architecture
+
 - Uses ChangeNotifier pattern for reactive updates
 - Stores notifications in SharedPreferences
 - Supports data payload for navigation
@@ -128,6 +154,7 @@ February 23, 2026
 - Badge updates automatically via Consumer widget
 
 ### Bank Transfer Flow
+
 1. User selects "Bank Transfer" as payment method
 2. Bank selection dropdown becomes visible
 3. "Phone Number" field changes to "Account Number"
@@ -158,6 +185,7 @@ February 23, 2026
 ## Future Enhancements
 
 Potential future improvements:
+
 - Push notifications for when app is in background
 - Notification categories and filtering
 - Rich notifications with images
@@ -170,8 +198,10 @@ Potential future improvements:
 ## Commits
 
 All changes committed to `dev` branch:
+
 - Commit 1: Fix type conversion errors in credit score and BNPL screens
 - Commit 2: Add comprehensive UX improvements and security features
 
 ---
+
 **Status**: ✅ All requested features successfully implemented and committed

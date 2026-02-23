@@ -213,14 +213,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Voice control
           SwitchListTile(
             title: const Text('Voice Control'),
-            subtitle: const Text('Control app with voice commands (Siri-like)'),
+            subtitle: const Text('Say "Inka" followed by commands for hands-free control'),
             value: _voiceControlEnabled,
             onChanged: _accessibilityEnabled
                 ? (value) {
                     setState(() => _voiceControlEnabled = value);
                     _updateSettings();
                     _accessibility.speak(
-                      value ? 'Voice control enabled. You can now use voice commands' : 'Voice control disabled',
+                      value 
+                        ? 'Voice control enabled. Say Inka followed by your command for hands-free operation' 
+                        : 'Voice control disabled',
                     );
                   }
                 : null,
