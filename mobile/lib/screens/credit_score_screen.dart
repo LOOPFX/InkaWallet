@@ -18,6 +18,15 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
   Map<String, dynamic>? _creditData;
   List<dynamic> _history = [];
 
+  // Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -223,7 +232,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                                   if (_creditData?['eligible_for_bnpl'] == true) ...[
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Max Loan: MKW ${NumberFormat('#,###').format(_creditData?['max_loan_amount'] ?? 0)}',
+                                      'Max Loan: MKW ${NumberFormat('#,###').format(_toDouble(_creditData?['max_loan_amount']))}',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -275,7 +284,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                         Expanded(
                           child: _buildStatCard(
                             'Total Borrowed',
-                            'MKW ${NumberFormat('#,###').format(_creditData?['total_borrowed'] ?? 0)}',
+                            'MKW ${NumberFormat('#,###').format(_toDouble(_creditData?['total_borrowed']))}',
                             Icons.arrow_upward,
                             Colors.orange,
                           ),
@@ -284,7 +293,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                         Expanded(
                           child: _buildStatCard(
                             'Total Repaid',
-                            'MKW ${NumberFormat('#,###').format(_creditData?['total_repaid'] ?? 0)}',
+                            'MKW ${NumberFormat('#,###').format(_toDouble(_creditData?['total_repaid']))}',
                             Icons.arrow_downward,
                             Colors.green,
                           ),

@@ -18,6 +18,24 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
   bool _isLoading = true;
   List<dynamic> _loans = [];
 
+  // Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  // Helper to safely convert dynamic values to int
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -120,11 +138,11 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildLoanCard(Map<String, dynamic> loan, bool isActive) {
-    final principalAmount = loan['principal_amount'] ?? 0;
-    final totalAmount = loan['total_amount'] ?? 0;
-    final amountPaid = loan['amount_paid'] ?? 0;
-    final installmentsPaid = loan['installments_paid'] ?? 0;
-    final installmentsTotal = loan['installments_total'] ?? 0;
+    final principalAmount = _toDouble(loan['principal_amount']);
+    final totalAmount = _toDouble(loan['total_amount']);
+    final amountPaid = _toDouble(loan['amount_paid']);
+    final installmentsPaid = _toInt(loan['installments_paid']);
+    final installmentsTotal = _toInt(loan['installments_total']);
     final progress = installmentsTotal > 0 ? installmentsPaid / installmentsTotal : 0.0;
 
     return Card(
@@ -421,10 +439,19 @@ class BNPLLoanDetails extends StatelessWidget {
     required this.onPayment,
   }) : super(key: key);
 
+  // Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isActive = loan['status'] == 'active';
-    final installmentAmount = loan['installment_amount'] ?? 0;
+    final installmentAmount = _toDouble(loan['installment_amount']);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -460,12 +487,12 @@ class BNPLLoanDetails extends StatelessWidget {
             const SizedBox(height: 24),
             
             _buildDetailRow('Loan ID', loan['loan_id'] ?? 'N/A'),
-            _buildDetailRow('Principal Amount', 'MKW ${NumberFormat('#,###').format(loan['principal_amount'] ?? 0)}'),
-            _buildDetailRow('Interest Rate', '${loan['interest_rate'] ?? 0}%'),
-            _buildDetailRow('Total Amount', 'MKW ${NumberFormat('#,###').format(loan['total_amount'] ?? 0)}'),
-            _buildDetailRow('Amount Paid', 'MKW ${NumberFormat('#,###').format(loan['amount_paid'] ?? 0)}'),
+            _buildDetailRow('Principal Amount', 'MKW ${NumberFormat('#,###').format(_toDouble(loan['principal_amount']))}'),
+            _buildDetailRow('Interest Rate', '${_toDouble(loan['interest_rate'])}%'),
+            _buildDetailRow('Total Amount', 'MKW ${NumberFormat('#,###').format(_toDouble(loan['total_amount']))}'),
+            _buildDetailRow('Amount Paid', 'MKW ${NumberFormat('#,###').format(_toDouble(loan['amount_paid']))}'),
             _buildDetailRow('Installment Amount', 'MKW ${NumberFormat('#,###').format(installmentAmount)}'),
-            _buildDetailRow('Installments', '${loan['installments_paid'] ?? 0} / ${loan['installments_total'] ?? 0}'),
+            _buildDetailRow('Installments', '${_toDouble(loan['installments_paid']).toInt()} / ${_toDouble(loan['installments_total']).toInt()}'),
             
             if (isActive) ...[
               _buildDetailRow('Next Payment', _formatDate(loan['next_payment_date'])),
