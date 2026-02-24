@@ -1,0 +1,45 @@
+services:
+  # Backend API Service
+  - type: web
+    name: inkawallet-backend
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        value: mysql-7821ee2-inkawallet.j.aivencloud.com
+      - key: DB_PORT
+        value: 25328
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false # Add manually in Render dashboard for security
+      - key: DB_NAME
+        value: defaultdb
+      - key: DB_SSL
+        value: true
+      - key: JWT_SECRET
+        generateValue: true # Render will auto-generate a secure secret
+      - key: PORT
+        value: 3000
+      - key: CORS_ORIGIN
+        value: https://inkawallet-admin.onrender.com
+    healthCheckPath: /api/health
+
+  # Admin Web Service
+  - type: web
+    name: inkawallet-admin
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: cd admin-web && npm install && npm run build
+    startCommand: cd admin-web && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://inkawallet-backend.onrender.com/api

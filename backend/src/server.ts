@@ -53,6 +53,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'InkaWallet API is running' });
 });
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'InkaWallet API is running' });
+});
+
 // Initialize Speechmatics WebSocket proxy
 const speechmaticsProxy = new SpeechmaticsProxyService();
 const wss = new WebSocketServer({ server, path: '/ws/voice' });
