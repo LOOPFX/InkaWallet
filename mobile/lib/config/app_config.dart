@@ -1,6 +1,6 @@
 class AppConfig {
   // API Configuration - Switch between dev and production
-  static const bool isProduction = false; // Change to true for production builds
+  static const bool isProduction = true; // Change to true for production builds
   
   static const String apiBaseUrl = isProduction 
     ? 'https://inkawallet-backend.onrender.com/api'
