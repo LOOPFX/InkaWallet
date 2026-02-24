@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/wallet_provider.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Transactions",
+      onVoiceCommand: (command) async {
+        // Basic navigation commands handled by VoiceEnabledScreen
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Transaction History'),
       ),
@@ -63,6 +69,7 @@ class TransactionsScreen extends StatelessWidget {
             },
           );
         },
+      ),
       ),
     );
   }

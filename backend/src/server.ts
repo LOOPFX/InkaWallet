@@ -16,6 +16,7 @@ import servicesRoutes from './routes/services.routes';
 import qrRoutes from './routes/qr.routes';
 import creditRoutes from './routes/credit.routes';
 import bnplRoutes from './routes/bnpl.routes';
+import kycRoutes from './routes/kyc.routes';
 import { SpeechmaticsProxyService } from './services/speechmatics-proxy.service';
 
 dotenv.config();
@@ -45,9 +46,14 @@ app.use('/api/services', servicesRoutes);
 app.use('/api/qr', qrRoutes);
 app.use('/api/credit', creditRoutes);
 app.use('/api/bnpl', bnplRoutes);
+app.use('/api/kyc', kycRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'InkaWallet API is running' });
+});
+
+app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'InkaWallet API is running' });
 });
 

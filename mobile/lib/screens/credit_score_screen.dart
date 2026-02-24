@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/notification_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'package:intl/intl.dart';
 
 class CreditScoreScreen extends StatefulWidget {
@@ -13,10 +15,20 @@ class CreditScoreScreen extends StatefulWidget {
 class _CreditScoreScreenState extends State<CreditScoreScreen> {
   final _api = ApiService();
   final _accessibility = AccessibilityService();
+  final _notifications = NotificationService();
   
   bool _isLoading = true;
   Map<String, dynamic>? _creditData;
   List<dynamic> _history = [];
+
+  // Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
 
   @override
   void initState() {
@@ -63,9 +75,22 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
       
       if (mounted) {
         final change = result['score_change'] ?? 0;
+        final newScore = result['score'] ?? 0;
         final message = change >= 0 
             ? 'Score increased by $change points!' 
             : 'Score decreased by ${change.abs()} points';
+        
+        // Add notification
+        await _notifications.addNotification(
+          title: 'Credit Score Updated',
+          message: 'Your credit score is now $newScore. $message',
+          type: 'system',
+          data: {
+            'type': 'credit_score_update',
+            'newScore': newScore,
+            'change': change,
+          },
+        );
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -100,7 +125,10 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Credit Score",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Credit Score'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -223,7 +251,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                                   if (_creditData?['eligible_for_bnpl'] == true) ...[
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Max Loan: MKW ${NumberFormat('#,###').format(_creditData?['max_loan_amount'] ?? 0)}',
+                                      'Max Loan: MKW ${NumberFormat('#,###').format(_toDouble(_creditData?['max_loan_amount']))}',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -275,7 +303,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                         Expanded(
                           child: _buildStatCard(
                             'Total Borrowed',
-                            'MKW ${NumberFormat('#,###').format(_creditData?['total_borrowed'] ?? 0)}',
+                            'MKW ${NumberFormat('#,###').format(_toDouble(_creditData?['total_borrowed']))}',
                             Icons.arrow_upward,
                             Colors.orange,
                           ),
@@ -284,7 +312,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                         Expanded(
                           child: _buildStatCard(
                             'Total Repaid',
-                            'MKW ${NumberFormat('#,###').format(_creditData?['total_repaid'] ?? 0)}',
+                            'MKW ${NumberFormat('#,###').format(_toDouble(_creditData?['total_repaid']))}',
                             Icons.arrow_downward,
                             Colors.green,
                           ),
@@ -330,6 +358,7 @@ class _CreditScoreScreenState extends State<CreditScoreScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 

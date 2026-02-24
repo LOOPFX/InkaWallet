@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'providers/wallet_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/accessibility_service.dart';
+import 'services/notification_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -14,6 +15,10 @@ void main() async {
   // Initialize accessibility service
   final accessibility = AccessibilityService();
   await accessibility.initialize();
+  
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
   
   runApp(const InkaWalletApp());
 }

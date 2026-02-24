@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _api = ApiService();
   final AccessibilityService _accessibility = AccessibilityService();
+  final NotificationService _notifications = NotificationService();
   
   bool _isAuthenticated = false;
   bool _isLoading = false;
@@ -50,6 +52,13 @@ class AuthProvider with ChangeNotifier {
       _user = response['user'];
       _isAuthenticated = true;
       
+      // Add welcome notification
+      await _notifications.addNotification(
+        title: 'Welcome to InkaWallet!',
+        message: 'Your account has been created successfully. Start managing your money securely.',
+        type: 'system',
+      );
+      
       await _accessibility.announceAndVibrate(
         'Welcome to InkaWallet, ${_user!['full_name']}!',
         important: true,
@@ -79,6 +88,13 @@ class AuthProvider with ChangeNotifier {
       final response = await _api.login(email: email, password: password);
       _user = response['user'];
       _isAuthenticated = true;
+      
+      // Add login notification
+      await _notifications.addNotification(
+        title: 'Welcome Back!',
+        message: 'You have successfully logged in to your InkaWallet account.',
+        type: 'system',
+      );
       
       await _accessibility.announceAndVibrate(
         'Welcome back, ${_user!['full_name']}!',

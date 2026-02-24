@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 
 class BillsScreen extends StatefulWidget {
   const BillsScreen({Key? key}) : super(key: key);
@@ -15,6 +17,7 @@ class _BillsScreenState extends State<BillsScreen> {
   final _amountController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
+  final _notifications = NotificationService();
 
   String _selectedBillType = 'tv';
   String? _selectedProvider;
@@ -98,6 +101,20 @@ class _BillsScreenState extends State<BillsScreen> {
       );
 
       if (mounted) {
+        // Add notification
+        await _notifications.addNotification(
+          title: 'Bill Payment',
+          message: 'Successfully paid MKW ${_amountController.text} to $_selectedProvider for ${_billLabels[_selectedBillType]}',
+          type: 'transaction',
+          data: {
+            'type': 'bill_payment',
+            'amount': double.parse(_amountController.text),
+            'provider': _selectedProvider,
+            'billType': _selectedBillType,
+            'account': _accountController.text,
+          },
+        );
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Bill payment successful!'),
@@ -126,7 +143,10 @@ class _BillsScreenState extends State<BillsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Pay Bills",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Pay Bills'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -313,6 +333,7 @@ class _BillsScreenState extends State<BillsScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

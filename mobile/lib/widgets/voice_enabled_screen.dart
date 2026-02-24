@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/voice_command_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/wake_word_service.dart';
 
 /// Widget wrapper that enables voice control for any screen
 class VoiceEnabledScreen extends StatefulWidget {
@@ -24,8 +25,10 @@ class VoiceEnabledScreen extends StatefulWidget {
 class _VoiceEnabledScreenState extends State<VoiceEnabledScreen> with WidgetsBindingObserver {
   final VoiceCommandService _voiceCommand = VoiceCommandService();
   final AccessibilityService _accessibility = AccessibilityService();
+  final WakeWordService _wakeWord = WakeWordService();
   
   bool _isListening = false;
+  bool _wakeWordActive = false;
   
   @override
   void initState() {
@@ -36,6 +39,7 @@ class _VoiceEnabledScreenState extends State<VoiceEnabledScreen> with WidgetsBin
   
   @override
   void dispose() {
+    _wakeWord.stopListening();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -43,7 +47,107 @@ class _VoiceEnabledScreenState extends State<VoiceEnabledScreen> with WidgetsBin
   Future<void> _initVoiceControl() async {
     if (_accessibility.isVoiceControlEnabled) {
       await _voiceCommand.initialize();
+      
+      // Initialize and start wake word detection
+      final initialized = await _wakeWord.initialize();
+      if (initialized) {
+        _wakeWord.onWakeWordDetected = _handleWakeWordCommand;
+        await _wakeWord.startListening();
+        setState(() => _wakeWordActive = true);
+      }
     }
+  }
+  
+  Future<void> _handleWakeWordCommand(String command) async {
+    debugPrint('Processing wake word command: $command');
+    
+    final commandMap = {
+      'command': command,
+      'intent': _extractIntent(command),
+      'screen': widget.screenName,
+    };
+    
+    if (widget.onVoiceCommand != null) {
+      widget.onVoiceCommand!(commandMap);
+    } else {
+      await _handleDefaultCommand(commandMap);
+    }
+  }
+  
+  String _extractIntent(String command) {
+    final lowerCommand = command.toLowerCase();
+    
+    // Check balance
+    if (lowerCommand.contains('balance') || lowerCommand.contains('how much')) {
+      return 'check_balance';
+    }
+    
+    // Send money
+    if (lowerCommand.contains('send') || lowerCommand.contains('transfer')) {
+      return 'send_money';
+    }
+    
+    // Request money
+    if (lowerCommand.contains('request') || lowerCommand.contains('receive')) {
+      return 'request_money';
+    }
+    
+    // Buy airtime
+    if (lowerCommand.contains('airtime') || lowerCommand.contains('recharge')) {
+      return 'buy_airtime';
+    }
+    
+    // Pay bills
+    if (lowerCommand.contains('bill') || lowerCommand.contains('pay bill')) {
+      return 'pay_bills';
+    }
+    
+    // Top up
+    if (lowerCommand.contains('top up') || lowerCommand.contains('topup') || lowerCommand.contains('add money')) {
+      return 'top_up';
+    }
+    
+    // QR code
+    if (lowerCommand.contains('my qr') || lowerCommand.contains('show qr') || lowerCommand.contains('my code')) {
+      return 'show_qr';
+    }
+    
+    // Scan QR
+    if (lowerCommand.contains('scan')) {
+      return 'scan_qr';
+    }
+    
+    // Credit score
+    if (lowerCommand.contains('credit') || lowerCommand.contains('score')) {
+      return 'credit_score';
+    }
+    
+    // BNPL
+    if (lowerCommand.contains('bnpl') || lowerCommand.contains('buy now pay later') || lowerCommand.contains('loan')) {
+      return 'bnpl';
+    }
+    
+    // Transactions
+    if (lowerCommand.contains('transaction') || lowerCommand.contains('history')) {
+      return 'transactions';
+    }
+    
+    // Settings
+    if (lowerCommand.contains('setting')) {
+      return 'settings';
+    }
+    
+    // Go back
+    if (lowerCommand.contains('back') || lowerCommand.contains('return') || lowerCommand.contains('previous')) {
+      return 'go_back';
+    }
+    
+    // Help
+    if (lowerCommand.contains('help')) {
+      return 'help';
+    }
+    
+    return 'unknown';
   }
   
   Future<void> _startListening() async {
@@ -97,7 +201,43 @@ class _VoiceEnabledScreenState extends State<VoiceEnabledScreen> with WidgetsBin
       children: [
         widget.child,
         
-        // Floating voice command button
+        // Wake word status indicator (top right)
+        if (_wakeWordActive && _accessibility.isVoiceControlEnabled)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.mic, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Say "Inka"',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        
+        // Floating voice command button (for manual activation)
         if (widget.enableFloatingMic && _accessibility.isVoiceControlEnabled)
           Positioned(
             bottom: 16,

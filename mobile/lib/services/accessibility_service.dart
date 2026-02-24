@@ -35,7 +35,7 @@ class AccessibilityService {
     _accessibilityEnabled = prefs.getBool('accessibility_enabled') ?? true;
     _voiceEnabled = prefs.getBool('voice_enabled') ?? true;
     _hapticsEnabled = prefs.getBool('haptics_enabled') ?? true;
-    _voiceControlEnabled = prefs.getBool('voice_control_enabled') ?? false;
+    _voiceControlEnabled = prefs.getBool('voice_control_enabled') ?? true; // Default to true
   }
   
   Future<void> _configureTTS() async {

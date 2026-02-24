@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/accessibility_service.dart';
+import '../services/notification_service.dart';
+import '../widgets/auth_confirmation_dialog.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'package:intl/intl.dart';
 
 class BNPLScreen extends StatefulWidget {
@@ -13,10 +16,29 @@ class BNPLScreen extends StatefulWidget {
 class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateMixin {
   final _api = ApiService();
   final _accessibility = AccessibilityService();
+  final _notifications = NotificationService();
   
   late TabController _tabController;
   bool _isLoading = true;
   List<dynamic> _loans = [];
+
+  // Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  // Helper to safely convert dynamic values to int
+  int _toInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
 
   @override
   void initState() {
@@ -58,7 +80,10 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Buy Now Pay Later",
+      onVoiceCommand: (cmd) async {},
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Buy Now Pay Later'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -84,6 +109,7 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
         icon: const Icon(Icons.add),
         label: const Text('Apply for BNPL'),
         backgroundColor: const Color(0xFF7C3AED),
+      ),
       ),
     );
   }
@@ -120,11 +146,11 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildLoanCard(Map<String, dynamic> loan, bool isActive) {
-    final principalAmount = loan['principal_amount'] ?? 0;
-    final totalAmount = loan['total_amount'] ?? 0;
-    final amountPaid = loan['amount_paid'] ?? 0;
-    final installmentsPaid = loan['installments_paid'] ?? 0;
-    final installmentsTotal = loan['installments_total'] ?? 0;
+    final principalAmount = _toDouble(loan['principal_amount']);
+    final totalAmount = _toDouble(loan['total_amount']);
+    final amountPaid = _toDouble(loan['amount_paid']);
+    final installmentsPaid = _toInt(loan['installments_paid']);
+    final installmentsTotal = _toInt(loan['installments_total']);
     final progress = installmentsTotal > 0 ? installmentsPaid / installmentsTotal : 0.0;
 
     return Card(
@@ -359,6 +385,22 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
 
                 Navigator.pop(context);
 
+                // Require authentication
+                final authenticated = await AuthConfirmationDialog.show(
+                  context: context,
+                  title: 'Confirm BNPL Application',
+                  message: 'Authenticate to apply for a loan of MKW $amount',
+                );
+
+                if (!authenticated) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Authentication required')),
+                    );
+                  }
+                  return;
+                }
+
                 try {
                   final result = await _api.applyForBNPL(
                     merchantName: merchant,
@@ -368,6 +410,19 @@ class _BNPLScreenState extends State<BNPLScreen> with SingleTickerProviderStateM
                   );
 
                   if (mounted) {
+                    // Add notification
+                    await _notifications.addNotification(
+                      title: 'BNPL Loan Approved',
+                      message: 'MKW ${amount} loan approved for $description at $merchant',
+                      type: 'transaction',
+                      data: {
+                        'type': 'bnpl_approved',
+                        'amount': double.parse(amount),
+                        'merchant': merchant,
+                        'installments': selectedInstallments,
+                      },
+                    );
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('BNPL application approved!'),
@@ -421,10 +476,19 @@ class BNPLLoanDetails extends StatelessWidget {
     required this.onPayment,
   }) : super(key: key);
 
+  // Helper to safely convert dynamic values to double
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isActive = loan['status'] == 'active';
-    final installmentAmount = loan['installment_amount'] ?? 0;
+    final installmentAmount = _toDouble(loan['installment_amount']);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -460,12 +524,12 @@ class BNPLLoanDetails extends StatelessWidget {
             const SizedBox(height: 24),
             
             _buildDetailRow('Loan ID', loan['loan_id'] ?? 'N/A'),
-            _buildDetailRow('Principal Amount', 'MKW ${NumberFormat('#,###').format(loan['principal_amount'] ?? 0)}'),
-            _buildDetailRow('Interest Rate', '${loan['interest_rate'] ?? 0}%'),
-            _buildDetailRow('Total Amount', 'MKW ${NumberFormat('#,###').format(loan['total_amount'] ?? 0)}'),
-            _buildDetailRow('Amount Paid', 'MKW ${NumberFormat('#,###').format(loan['amount_paid'] ?? 0)}'),
+            _buildDetailRow('Principal Amount', 'MKW ${NumberFormat('#,###').format(_toDouble(loan['principal_amount']))}'),
+            _buildDetailRow('Interest Rate', '${_toDouble(loan['interest_rate'])}%'),
+            _buildDetailRow('Total Amount', 'MKW ${NumberFormat('#,###').format(_toDouble(loan['total_amount']))}'),
+            _buildDetailRow('Amount Paid', 'MKW ${NumberFormat('#,###').format(_toDouble(loan['amount_paid']))}'),
             _buildDetailRow('Installment Amount', 'MKW ${NumberFormat('#,###').format(installmentAmount)}'),
-            _buildDetailRow('Installments', '${loan['installments_paid'] ?? 0} / ${loan['installments_total'] ?? 0}'),
+            _buildDetailRow('Installments', '${_toDouble(loan['installments_paid']).toInt()} / ${_toDouble(loan['installments_total']).toInt()}'),
             
             if (isActive) ...[
               _buildDetailRow('Next Payment', _formatDate(loan['next_payment_date'])),
@@ -552,6 +616,18 @@ class BNPLLoanDetails extends StatelessWidget {
                 );
 
                 if (context.mounted) {
+                  // Add notification
+                  await NotificationService().addNotification(
+                    title: 'BNPL Payment',
+                    message: 'Successfully paid installment for ${loan['item_description']}',
+                    type: 'transaction',
+                    data: {
+                      'type': 'bnpl_payment',
+                      'loanId': loan['loan_id'],
+                      'item': loan['item_description'],
+                    },
+                  );
+                  
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(result['message'] ?? 'Payment successful'),

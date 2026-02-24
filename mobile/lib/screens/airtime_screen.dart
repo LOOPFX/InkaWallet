@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -17,6 +19,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
   final _amountController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
+  final _notifications = NotificationService();
   
   String _selectedProvider = 'airtel';
   bool _isLoading = false;
@@ -58,6 +61,19 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
       );
 
       if (mounted) {
+        // Add notification
+        await _notifications.addNotification(
+          title: 'Airtime Purchase',
+          message: 'Successfully purchased MKW ${_amountController.text} ${_selectedProvider.toUpperCase()} airtime for ${_phoneController.text}',
+          type: 'transaction',
+          data: {
+            'type': 'airtime',
+            'amount': double.parse(_amountController.text),
+            'phone': _phoneController.text,
+            'provider': _selectedProvider,
+          },
+        );
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Airtime purchased successfully!'),
@@ -84,9 +100,29 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
     }
   }
 
+  Future<void> _handleVoiceCommand(String command) async {
+    final lowerCommand = command.toLowerCase();
+    
+    // Extract amount from command like "buy airtime for 500" or "500 kwacha airtime"
+    final amountMatch = RegExp(r'(\d+)').firstMatch(lowerCommand);
+    if (amountMatch != null) {
+      _amountController.text = amountMatch.group(1)!;
+    }
+    
+    // Detect provider
+    if (lowerCommand.contains('airtel')) {
+      setState(() => _selectedProvider = 'airtel');
+    } else if (lowerCommand.contains('tnm')) {
+      setState(() => _selectedProvider = 'tnm');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Buy Airtime",
+      onVoiceCommand: (cmd) async { await _handleVoiceCommand(cmd["text"] ?? ""); },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Buy Airtime'),
         backgroundColor: const Color(0xFF7C3AED),
@@ -277,6 +313,7 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

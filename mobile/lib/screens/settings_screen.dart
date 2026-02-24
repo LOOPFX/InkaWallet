@@ -6,7 +6,10 @@ import '../services/accessibility_service.dart';
 import '../services/biometric_service.dart';
 import '../services/voice_command_service.dart';
 import '../services/api_service.dart';
+import '../services/kyc_service.dart';
+import '../widgets/voice_enabled_screen.dart';
 import 'login_screen.dart';
+import 'kyc_status_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _biometric = BiometricService();
   final _voiceCommand = VoiceCommandService();
   final _api = ApiService();
+  final _kycService = KycService();
   
   bool _accessibilityEnabled = true;
   bool _voiceEnabled = true;
@@ -27,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _voiceControlEnabled = false;
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
+  String? _kycStatus;
   
   @override
   void initState() {
@@ -37,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _initialize() async {
     await _loadSettings();
     await _checkBiometrics();
+    await _loadKycStatus();
   }
 
   Future<void> _loadSettings() async {
@@ -52,6 +58,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkBiometrics() async {
     final available = await _biometric.checkAvailability();
     setState(() => _biometricAvailable = available);
+  }
+
+  Future<void> _loadKycStatus() async {
+    final status = await _kycService.getKycStatus();
+    if (status != null && mounted) {
+      setState(() => _kycStatus = status['kyc_status']);
+    }
   }
 
   Future<void> _updateSettings() async {
@@ -92,17 +105,101 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _handleVoiceCommand(String command) async {
+    final lowerCommand = command.toLowerCase();
+    
+    if (lowerCommand.contains('logout') || lowerCommand.contains('log out') || lowerCommand.contains('sign out')) {
+      await _logout();
+    } else if (lowerCommand.contains('enable') && lowerCommand.contains('voice')) {
+      setState(() => _voiceControlEnabled = true);
+      await _updateSettings();
+      _accessibility.speak('Voice control enabled');
+    } else if (lowerCommand.contains('disable') && lowerCommand.contains('voice')) {
+      setState(() => _voiceControlEnabled = false);
+      await _updateSettings();
+      _accessibility.speak('Voice control disabled');
+    } else if (lowerCommand.contains('enable') && lowerCommand.contains('dark')) {
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      if (!themeProvider.isDarkMode) themeProvider.toggleTheme();
+      _accessibility.speak('Dark mode enabled');
+    } else if (lowerCommand.contains('enable') && lowerCommand.contains('light')) {
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      if (themeProvider.isDarkMode) themeProvider.toggleTheme();
+      _accessibility.speak('Light mode enabled');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
     
-    return Scaffold(
+    return VoiceEnabledScreen(
+      screenName: "Settings",
+      onVoiceCommand: (cmd) async { await _handleVoiceCommand(cmd["text"] ?? ""); },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // User Profile Section
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: const Color(0xFF7C3AED),
+                    child: Text(
+                      user?['full_name']?.toString().substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(fontSize: 32, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user?['full_name'] ?? 'User',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (user?['email'] != null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.email, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          user!['email'],
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 4),
+                  if (user?['phone_number'] != null)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.phone, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          user!['phone_number'],
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
           const Text(
             'Accessibility Features',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -156,14 +253,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Voice control
           SwitchListTile(
             title: const Text('Voice Control'),
-            subtitle: const Text('Control app with voice commands (Siri-like)'),
+            subtitle: const Text('Say "Inka" followed by commands for hands-free control'),
             value: _voiceControlEnabled,
             onChanged: _accessibilityEnabled
                 ? (value) {
                     setState(() => _voiceControlEnabled = value);
                     _updateSettings();
                     _accessibility.speak(
-                      value ? 'Voice control enabled. You can now use voice commands' : 'Voice control disabled',
+                      value 
+                        ? 'Voice control enabled. Say Inka followed by your command for hands-free operation' 
+                        : 'Voice control disabled',
                     );
                   }
                 : null,
@@ -212,6 +311,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: Text('Biometric Not Available'),
               subtitle: Text('Your device does not support biometric authentication'),
             ),
+          
+          const Divider(height: 32),
+          
+          // KYC Verification Section
+          const Text(
+            'Account Verification',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          
+          Card(
+            child: ListTile(
+              leading: Icon(
+                _kycStatus == 'verified' ? Icons.verified_user : Icons.security,
+                color: _kycStatus == 'verified' ? Colors.green : Colors.orange,
+              ),
+              title: const Text('KYC Verification'),
+              subtitle: Text(
+                _kycStatus == null
+                    ? 'Loading...'
+                    : _kycStatus == 'verified'
+                        ? 'Your account is verified'
+                        : _kycStatus == 'pending_verification'
+                            ? 'Verification pending'
+                            : 'Complete verification to unlock full features',
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const KycStatusScreen()),
+                );
+                _loadKycStatus(); // Reload status after returning
+              },
+            ),
+          ),
           
           const Divider(height: 32),
           
@@ -266,6 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: const Text('Logout'),
           ),
         ],
+      ),
       ),
     );
   }
