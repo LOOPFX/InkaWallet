@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Table, Button, Nav, Form, Alert } from 'react-bootstrap';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ total_users: 0, total_transactions: 0, total_balance: 0 });
